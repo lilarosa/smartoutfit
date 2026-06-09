@@ -1,11 +1,11 @@
-const CACHE_NAME = "smart-outfit-v24";
+const CACHE_NAME = "smart-outfit-v25";
 const APP_ASSETS = [
-    "/",
-    "/index.html",
-    "/styles.css",
-    "/app.js",
-    "/manifest.webmanifest",
-    "/icon.svg"
+    "./",
+    "index.html",
+    "styles.css",
+    "app.js",
+    "manifest.webmanifest",
+    "icon.svg"
 ];
 
 self.addEventListener("install", (event) => {
@@ -26,6 +26,6 @@ self.addEventListener("fetch", (event) => {
     }
 
     event.respondWith(
-        fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
+        fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match("./")))
     );
 });
