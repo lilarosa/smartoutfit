@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#edf2f5"/>
+  <path d="M230 130l62-38h56l62 38 78 70-44 430H196l-44-430 78-70z" fill="#263f5f" stroke="#1a2e46" stroke-width="12"/>
+  <path d="M292 95l28 112 28-112M255 160l65 96 65-96" fill="none" stroke="#e8edf1" stroke-width="10"/>
+  <circle cx="320" cy="325" r="10" fill="#d5b46a"/>
+  <circle cx="320" cy="390" r="10" fill="#d5b46a"/>
+  <text x="320" y="720" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#263f5f">Navy Blazer</text>
+</svg>

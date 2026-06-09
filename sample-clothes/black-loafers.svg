@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2f0ea"/>
+  <path d="M118 402c88 3 140-44 214-44 62 0 99 52 180 58 38 3 60 30 52 66H100c-14-38-9-64 18-80z" fill="#242424" stroke="#111" stroke-width="12"/>
+  <path d="M218 402h132M100 484h460" stroke="#555" stroke-width="10"/>
+  <text x="320" y="680" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#222724">Black Loafers</text>
+</svg>

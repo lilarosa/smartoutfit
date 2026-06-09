@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#eef4ef"/>
+  <path d="M210 150l70-55h80l70 55 92 52-52 120-62-28v330H232V294l-62 28-52-120 92-52z" fill="#fffdf8" stroke="#cfd7d1" stroke-width="12"/>
+  <path d="M280 95l40 78 40-78M320 175v450" fill="none" stroke="#d6ddd8" stroke-width="10"/>
+  <circle cx="320" cy="245" r="8" fill="#9aa7a0"/>
+  <circle cx="320" cy="315" r="8" fill="#9aa7a0"/>
+  <circle cx="320" cy="385" r="8" fill="#9aa7a0"/>
+  <text x="320" y="720" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#2f6f73">White Shirt</text>
+</svg>

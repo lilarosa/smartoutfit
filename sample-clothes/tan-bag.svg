@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f7f0e8"/>
+  <path d="M205 275h230l34 310H171l34-310z" fill="#b98152" stroke="#8b5c3e" stroke-width="12"/>
+  <path d="M250 276c0-70 34-108 70-108s70 38 70 108" fill="none" stroke="#8b5c3e" stroke-width="18"/>
+  <circle cx="260" cy="335" r="10" fill="#e9c59a"/>
+  <circle cx="380" cy="335" r="10" fill="#e9c59a"/>
+  <text x="320" y="700" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#8b5c3e">Tan Bag</text>
+</svg>

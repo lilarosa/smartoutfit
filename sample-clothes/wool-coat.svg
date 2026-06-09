@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f4eee8"/>
+  <path d="M220 105l70-35h60l70 35 82 94-58 482H196l-58-482 82-94z" fill="#7b5a47" stroke="#5e4234" stroke-width="12"/>
+  <path d="M290 72l30 128 30-128M246 142l74 118 74-118" fill="none" stroke="#d8c3b5" stroke-width="10"/>
+  <path d="M232 322h176" stroke="#5e4234" stroke-width="14"/>
+  <text x="320" y="735" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#7b5a47">Wool Coat</text>
+</svg>

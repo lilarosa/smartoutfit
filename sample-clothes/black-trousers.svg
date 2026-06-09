@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2f0ea"/>
+  <path d="M232 125h176l22 560h-98l-12-365-12 365h-98l22-560z" fill="#222724" stroke="#111" stroke-width="12"/>
+  <path d="M232 125h176v72H232z" fill="#303633"/>
+  <path d="M320 205v480" stroke="#4a514d" stroke-width="8"/>
+  <text x="320" y="740" text-anchor="middle" font-family="Arial" font-size="40" font-weight="700" fill="#2f6f73">Black Trousers</text>
+</svg>
