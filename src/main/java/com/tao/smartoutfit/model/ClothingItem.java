@@ -1,6 +1,7 @@
 package com.tao.smartoutfit.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -28,6 +29,9 @@ public class ClothingItem {
     private String occasion;
 
     private String material;
+    private String brand;
+    private BigDecimal price;
+    private String sizeLabel;
 
     @Column(name = "purchase_date")
     private LocalDate purchaseDate;
@@ -38,6 +42,9 @@ public class ClothingItem {
     @Column(name = "last_worn_at")
     private LocalDateTime lastWornAt;
 
+    @Column(name = "outfit_adoption_count")
+    private Integer outfitAdoptionCount = 0;
+
     @Column(name = "special_care")
     private Boolean specialCare = false;
 
@@ -46,6 +53,12 @@ public class ClothingItem {
 
     @Column(name = "recycling_notes", length = 1000)
     private String recyclingNotes;
+
+    @Column(name = "special_meaning", length = 1000)
+    private String specialMeaning;
+
+    @Column(name = "special_tag")
+    private Boolean specialTag = false;
 
 
     @Column(name = "is_archived")
@@ -80,8 +93,14 @@ public class ClothingItem {
         if (this.wearCount == null) {
             this.wearCount = 0;
         }
+        if (this.outfitAdoptionCount == null) {
+            this.outfitAdoptionCount = 0;
+        }
         if (this.specialCare == null) {
             this.specialCare = false;
+        }
+        if (this.specialTag == null) {
+            this.specialTag = false;
         }
     }
 
@@ -118,6 +137,18 @@ public class ClothingItem {
         return material;
     }
 
+    public String getBrand() {
+        return brand;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public String getSizeLabel() {
+        return sizeLabel;
+    }
+
     public LocalDate getPurchaseDate() {
         return purchaseDate;
     }
@@ -130,6 +161,17 @@ public class ClothingItem {
         return lastWornAt;
     }
 
+    public Integer getOutfitAdoptionCount() {
+        return outfitAdoptionCount;
+    }
+
+    @Transient
+    public Integer getFavoriteScore() {
+        int wears = wearCount == null ? 0 : wearCount;
+        int adoptions = outfitAdoptionCount == null ? 0 : outfitAdoptionCount;
+        return Math.min(100, wears * 4 + adoptions * 12);
+    }
+
     public Boolean getSpecialCare() {
         return specialCare;
     }
@@ -140,6 +182,14 @@ public class ClothingItem {
 
     public String getRecyclingNotes() {
         return recyclingNotes;
+    }
+
+    public String getSpecialMeaning() {
+        return specialMeaning;
+    }
+
+    public Boolean getSpecialTag() {
+        return specialTag;
     }
 
     @Transient
@@ -199,6 +249,18 @@ public class ClothingItem {
         this.material = material;
     }
 
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public void setSizeLabel(String sizeLabel) {
+        this.sizeLabel = sizeLabel;
+    }
+
     public void setPurchaseDate(LocalDate purchaseDate) {
         this.purchaseDate = purchaseDate;
     }
@@ -211,6 +273,10 @@ public class ClothingItem {
         this.lastWornAt = lastWornAt;
     }
 
+    public void setOutfitAdoptionCount(Integer outfitAdoptionCount) {
+        this.outfitAdoptionCount = outfitAdoptionCount;
+    }
+
     public void setSpecialCare(Boolean specialCare) {
         this.specialCare = specialCare;
     }
@@ -221,6 +287,14 @@ public class ClothingItem {
 
     public void setRecyclingNotes(String recyclingNotes) {
         this.recyclingNotes = recyclingNotes;
+    }
+
+    public void setSpecialMeaning(String specialMeaning) {
+        this.specialMeaning = specialMeaning;
+    }
+
+    public void setSpecialTag(Boolean specialTag) {
+        this.specialTag = specialTag;
     }
 
     public void setImageUrl(String imageUrl) {

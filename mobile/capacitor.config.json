@@ -1,0 +1,6 @@
+{
+  "appId": "com.tao.smartoutfit",
+  "appName": "Smart Outfit",
+  "webDir": "../src/main/resources/static",
+  "bundledWebRuntime": false
+}

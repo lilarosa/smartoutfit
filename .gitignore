@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local tools and generated assets ###
+.tools/
+mobile/node_modules/
+uploads/

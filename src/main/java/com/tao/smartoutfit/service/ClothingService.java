@@ -1,5 +1,6 @@
 package com.tao.smartoutfit.service;
 
+import com.tao.smartoutfit.image.ImageStorageService;
 import com.tao.smartoutfit.model.ClothingItem;
 import com.tao.smartoutfit.repository.ClothingItemRepository;
 import org.springframework.stereotype.Service;
@@ -13,9 +14,11 @@ import java.util.Optional;
 public class ClothingService {
 
     private final ClothingItemRepository clothingItemRepository;
+    private final ImageStorageService imageStorageService;
 
-    public ClothingService(ClothingItemRepository clothingItemRepository) {
+    public ClothingService(ClothingItemRepository clothingItemRepository, ImageStorageService imageStorageService) {
         this.clothingItemRepository = clothingItemRepository;
+        this.imageStorageService = imageStorageService;
     }
 
     public ClothingItem getSampleClothingItem() {
@@ -82,12 +85,18 @@ public class ClothingService {
         existingItem.setSeason(updatedItem.getSeason());
         existingItem.setOccasion(updatedItem.getOccasion());
         existingItem.setMaterial(updatedItem.getMaterial());
+        existingItem.setBrand(updatedItem.getBrand());
+        existingItem.setPrice(updatedItem.getPrice());
+        existingItem.setSizeLabel(updatedItem.getSizeLabel());
         existingItem.setPurchaseDate(updatedItem.getPurchaseDate());
         existingItem.setWearCount(updatedItem.getWearCount());
         existingItem.setLastWornAt(updatedItem.getLastWornAt());
+        existingItem.setOutfitAdoptionCount(updatedItem.getOutfitAdoptionCount());
         existingItem.setSpecialCare(updatedItem.getSpecialCare());
         existingItem.setCareInstructions(updatedItem.getCareInstructions());
         existingItem.setRecyclingNotes(updatedItem.getRecyclingNotes());
+        existingItem.setSpecialMeaning(updatedItem.getSpecialMeaning());
+        existingItem.setSpecialTag(updatedItem.getSpecialTag());
         existingItem.setImageUrl(updatedItem.getImageUrl());
         existingItem.setIsArchived(updatedItem.getIsArchived());
 
@@ -109,12 +118,36 @@ public class ClothingService {
         return clothingItemRepository.save(existingItem);
     }
 
+    public ClothingItem recordOutfitAdoption(Long id) {
+        Optional<ClothingItem> existingOptional = clothingItemRepository.findById(id);
+
+        if (existingOptional.isEmpty()) {
+            return null;
+        }
+
+        ClothingItem existingItem = existingOptional.get();
+        int currentCount = existingItem.getOutfitAdoptionCount() == null ? 0 : existingItem.getOutfitAdoptionCount();
+        existingItem.setOutfitAdoptionCount(currentCount + 1);
+
+        return clothingItemRepository.save(existingItem);
+    }
+
     public boolean deleteClothingById(Long id) {
-        if (!clothingItemRepository.existsById(id)) {
+        Optional<ClothingItem> existingOptional = clothingItemRepository.findById(id);
+        if (existingOptional.isEmpty()) {
             return false;
         }
+
+        imageStorageService.deleteIfLocalUpload(existingOptional.get().getImageUrl());
         clothingItemRepository.deleteById(id);
         return true;
+    }
+
+    public int deleteAllClothesAndImages() {
+        List<ClothingItem> clothes = clothingItemRepository.findAll();
+        clothes.forEach(item -> imageStorageService.deleteIfLocalUpload(item.getImageUrl()));
+        clothingItemRepository.deleteAll(clothes);
+        return clothes.size();
     }
 
     private boolean matches(String expected, String actual) {

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f3f1e7"/>
+  <path d="M225 150l70-38h50l70 38 92 68-58 112-54-34v310H245V296l-54 34-58-112 92-68z" fill="#e7d7b8" stroke="#c8b894" stroke-width="12"/>
+  <path d="M286 112h68" stroke="#b8a781" stroke-width="10"/>
+  <text x="320" y="720" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#8f7a51">Linen Top</text>
+</svg>

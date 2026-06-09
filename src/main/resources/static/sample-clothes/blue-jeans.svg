@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#eef3f6"/>
+  <path d="M228 120h184l34 565H338l-18-360-18 360H194l34-565z" fill="#426d9a" stroke="#2d557e" stroke-width="12"/>
+  <path d="M228 120h184v76H228z" fill="#345f8a"/>
+  <path d="M320 200v485" stroke="#91b0ca" stroke-width="8"/>
+  <text x="320" y="740" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#315f7d">Blue Jeans</text>
+</svg>

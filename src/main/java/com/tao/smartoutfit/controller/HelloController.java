@@ -1,6 +1,7 @@
 package com.tao.smartoutfit.controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import com.tao.smartoutfit.model.ClothingItem;
+import com.tao.smartoutfit.model.OutfitPlan;
 import com.tao.smartoutfit.model.OutfitRecommendation;
 import com.tao.smartoutfit.service.ClothingService;
 import com.tao.smartoutfit.service.OutfitRecommendationService;
@@ -40,6 +41,21 @@ public class HelloController {
             @RequestParam int temperature
     ) {
         return outfitRecommendationService.getRecommendation(occasion, season, temperature);
+    }
+
+    @GetMapping("/outfits/recommendations")
+    public List<OutfitPlan> recommendOutfitPlans(
+            @RequestParam String occasion,
+            @RequestParam String season,
+            @RequestParam int temperature,
+            @RequestParam(required = false) String colorPreference
+    ) {
+        return outfitRecommendationService.recommendOutfitPlans(
+                occasion,
+                season,
+                temperature,
+                colorPreference
+        );
     }
 
     @GetMapping("/clothes/sample")
@@ -93,6 +109,12 @@ public class HelloController {
             return "Clothing item with id " + id + " was not found.";
         }
     }
+
+    @DeleteMapping("/clothes/all")
+    public String deleteAllClothes() {
+        int deletedCount = clothingService.deleteAllClothesAndImages();
+        return deletedCount + " clothing items and local uploaded images were deleted.";
+    }
     @PutMapping("/clothes")
     public ClothingItem updateClothingItem(@RequestBody ClothingItem clothingItem) {
         return clothingService.updateClothingItem(clothingItem);
@@ -101,5 +123,10 @@ public class HelloController {
     @PatchMapping("/clothes/wear")
     public ClothingItem recordWear(@RequestParam Long id) {
         return clothingService.recordWear(id);
+    }
+
+    @PatchMapping("/clothes/adopt-outfit")
+    public ClothingItem recordOutfitAdoption(@RequestParam Long id) {
+        return clothingService.recordOutfitAdoption(id);
     }
 }

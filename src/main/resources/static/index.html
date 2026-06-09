@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f7f3ea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Smart Outfit">
+    <title>Smart Outfit</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="app-shell">
+    <header class="top-bar">
+        <div>
+            <p class="eyebrow">SMART OUTFIT</p>
+            <h1>My Wardrobe</h1>
+        </div>
+        <div class="weather-chip" id="weatherChip">
+            <div>
+                <span class="weather-temp" id="weatherTemp">16°C</span>
+                <p id="weatherSummary">Manual weather</p>
+            </div>
+            <button class="weather-button" id="useLocationWeatherButton" type="button">Locate</button>
+        </div>
+        <button class="icon-button" id="refreshButton" type="button" title="Refresh wardrobe" aria-label="Refresh wardrobe">↻</button>
+        <button class="icon-button" id="settingsButton" type="button" title="API Settings" aria-label="API Settings">⚙</button>
+    </header>
+
+    <nav class="app-tabs" aria-label="Pages">
+        <button class="tab-button active" data-page="closet" type="button">Home</button>
+        <button class="tab-button" data-page="outfits" type="button">Outfit Planner</button>
+        <button class="tab-button" data-page="fitting" type="button">Fitting Mirror</button>
+        <button class="tab-button" data-page="tools" type="button">Tools</button>
+        <button class="tab-button" data-page="wellness" type="button">Wellness</button>
+    </nav>
+
+    <section id="closetPage" class="page-panel active">
+        <section class="home-grid">
+            <article class="home-hero-card">
+                <div class="section-heading">
+                    <div>
+                        <h2>Today's Outfit</h2>
+                        <p class="dialog-subtitle">Recommended from weather, season, and your wardrobe</p>
+                    </div>
+                    <button class="ghost-button" id="refreshHomeRecommendationButton" type="button">Refresh</button>
+                </div>
+                <div class="weather-row">
+                    <label>
+                        Current temperature °C
+                        <input id="homeTemperature" type="number" min="-20" max="45" step="1" value="16">
+                    </label>
+                    <label>
+                        Current Season
+                        <select id="homeSeason">
+                            <option value="spring">Spring</option>
+                            <option value="summer">Summer</option>
+                            <option value="autumn">Autumn</option>
+                            <option value="winter">Winter</option>
+                        </select>
+                    </label>
+                    <label>
+                        Today's occasion
+                        <select id="homeOccasion">
+                            <option value="work">Work</option>
+                            <option value="casual">Casual</option>
+                            <option value="party">Party</option>
+                            <option value="sport">Sport</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="homeRecommendation" class="home-recommendation" aria-live="polite"></div>
+                <p class="quiet-note">Weather API is prepared; enter temperature manually for now, with location weather planned later.</p>
+            </article>
+
+            <aside class="home-side-card">
+                <div class="section-heading">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="quick-actions">
+                    <button class="primary-button" id="homeNewItemButton" type="button">Add Item</button>
+                    <button class="ghost-button" id="homeBatchImportButton" type="button">Batch Import</button>
+                    <button class="ghost-button" id="browseAllButton" type="button">Browse Wardrobe</button>
+                </div>
+            </aside>
+        </section>
+
+        <section class="stats-strip" aria-label="Wardrobe stats">
+            <article>
+                <span id="totalCount">0</span>
+                <p>All</p>
+            </article>
+            <article>
+                <span id="careCount">0</span>
+                <p>Special Care</p>
+            </article>
+            <article>
+                <span id="idleCount">0</span>
+                <p>Unworn 1Y</p>
+            </article>
+        </section>
+
+        <section class="home-section">
+            <div class="section-heading">
+                <h2>New Favorites</h2>
+                <button class="ghost-button" id="recentBrowseButton" type="button">View All</button>
+            </div>
+            <div class="recent-grid" id="recentGrid"></div>
+        </section>
+
+        <section id="browseSection" class="home-section browse-section" hidden>
+            <div class="section-heading">
+                <h2>AllItem</h2>
+                <button class="ghost-button" id="closeBrowseButton" type="button">Collapse</button>
+            </div>
+            <section class="filters" aria-label="Wardrobe filters">
+                <select id="seasonFilter" aria-label="Season">
+                    <option value="">AllSeason</option>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                </select>
+                <select id="occasionFilter" aria-label="Occasion">
+                    <option value="">AllOccasion</option>
+                    <option value="work">Work</option>
+                    <option value="casual">Casual</option>
+                    <option value="party">Party</option>
+                    <option value="sport">Sport</option>
+                </select>
+                <select id="sortBy" aria-label="Sort method">
+                    <option value="createdAt">Entry Date</option>
+                    <option value="purchaseDate">Purchase Date</option>
+                    <option value="wearCount">Wear Frequency</option>
+                    <option value="season">Season</option>
+                    <option value="lastWornAt">Last Worn</option>
+                </select>
+            </section>
+
+            <section class="content-grid">
+                <div class="closet-panel">
+                    <div class="section-heading">
+                        <h2>Item</h2>
+                        <div class="inline-actions">
+                            <button class="ghost-button" id="batchImportButton" type="button">Batch Import</button>
+                            <button class="primary-button" id="newItemButton" type="button">Add</button>
+                        </div>
+                        <input id="batchImageFiles" type="file" accept="image/*" multiple hidden>
+                    </div>
+                    <div class="clothes-grid" id="clothesGrid" aria-live="polite"></div>
+                </div>
+
+                <aside class="detail-panel" id="detailPanel" aria-live="polite">
+                    <div class="empty-detail">
+                        <p>Select an item to view details</p>
+                    </div>
+                </aside>
+            </section>
+        </section>
+    </section>
+
+    <section id="outfitsPage" class="page-panel">
+        <section class="recommendation-grid single-column">
+            <form id="outfitForm" class="wellness-card">
+                <div class="section-heading">
+                    <h2>Generate Outfit</h2>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Occasion
+                        <select id="outfitOccasion" required>
+                            <option value="work">Work</option>
+                            <option value="casual">Casual</option>
+                            <option value="party">Party</option>
+                            <option value="sport">Sport</option>
+                        </select>
+                    </label>
+                    <label>
+                        Season
+                        <select id="outfitSeason" required>
+                            <option value="spring">Spring</option>
+                            <option value="summer">Summer</option>
+                            <option value="autumn">Autumn</option>
+                            <option value="winter">Winter</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Temperature °C
+                        <input id="outfitTemperature" type="number" min="-20" max="45" step="1" value="22" required>
+                    </label>
+                    <label>
+                        Color preference
+                        <input id="outfitColor" type="text" placeholder="black / white / red">
+                    </label>
+                </div>
+                <button class="primary-button" type="submit">Recommend Outfits</button>
+                <p class="quiet-note">Plans are assembled from your existing wardrobe. AI full-body visuals can be connected later.</p>
+            </form>
+        </section>
+        <section class="outfit-results" id="outfitResults" aria-live="polite"></section>
+    </section>
+
+    <section id="fittingPage" class="page-panel">
+        <section class="fitting-room-grid">
+            <article class="fitting-preview-card">
+                <div class="section-heading">
+                    <div>
+                        <h2>My Fitting Mirror</h2>
+                        <p class="dialog-subtitle">Preview outfits with a private avatar, no real full-body photo required</p>
+                    </div>
+                    <span class="pill warn">MVP</span>
+                </div>
+                <div class="avatar-stage" id="avatarStage">
+                    <div class="avatar-body" id="avatarBody">
+                        <div class="avatar-hair" id="avatarHair"></div>
+                        <div class="avatar-head" id="avatarHead">
+                            <span class="avatar-eye left"></span>
+                            <span class="avatar-eye right"></span>
+                            <span class="avatar-mouth"></span>
+                        </div>
+                        <div class="avatar-neck"></div>
+                        <div class="avatar-torso">
+                            <div class="fit-layer fit-layer-top" id="fitLayerTop"></div>
+                            <div class="fit-layer fit-layer-outerwear" id="fitLayerOuterwear"></div>
+                        </div>
+                        <div class="avatar-arms"></div>
+                        <div class="avatar-hips">
+                            <div class="fit-layer fit-layer-bottom" id="fitLayerBottom"></div>
+                        </div>
+                        <div class="avatar-legs"></div>
+                        <div class="avatar-feet">
+                            <div class="fit-layer fit-layer-shoes" id="fitLayerShoes"></div>
+                        </div>
+                    </div>
+                    <div class="fit-accessory fit-accessory-bag" id="fitLayerBag"></div>
+                </div>
+                <p class="quiet-note">This is an avatar-based outfit sketch for color, proportion, and styling direction. Real-photo try-on can be added later as an opt-in feature.</p>
+            </article>
+
+            <article class="fitting-control-card">
+                <div class="section-heading">
+                    <h2>Body Profile</h2>
+                    <button class="ghost-button" id="saveAvatarProfileButton" type="button">Save Profile</button>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Avatar Style
+                        <select id="avatarStyle">
+                            <option value="cute">Cute</option>
+                            <option value="elegant">Elegant</option>
+                            <option value="queen">Chic</option>
+                        </select>
+                    </label>
+                    <label>
+                        Body Shape
+                        <select id="avatarShape">
+                            <option value="balanced">Balanced</option>
+                            <option value="petite">Petite</option>
+                            <option value="curvy">Curvy</option>
+                            <option value="tall">Tall</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Skin Tone
+                        <select id="avatarSkin">
+                            <option value="light">Light</option>
+                            <option value="warm">Warm</option>
+                            <option value="tan">Tan</option>
+                            <option value="deep">Deep</option>
+                        </select>
+                    </label>
+                    <label>
+                        Hair Style
+                        <select id="avatarHairStyle">
+                            <option value="bob">Bob</option>
+                            <option value="long">Long</option>
+                            <option value="bun">Bun</option>
+                        </select>
+                    </label>
+                    <label>
+                        Preview Scale
+                        <select id="avatarScale">
+                            <option value="natural">Natural</option>
+                            <option value="compact">Compact</option>
+                            <option value="elongated">Elongated</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="section-heading">
+                    <h2>Choose Items</h2>
+                    <button class="ghost-button" id="clearFittingButton" type="button">Clear</button>
+                </div>
+                <div class="fitting-select-grid">
+                    <label>
+                        Top
+                        <select id="fitTopSelect"></select>
+                    </label>
+                    <label>
+                        Bottom / Dress
+                        <select id="fitBottomSelect"></select>
+                    </label>
+                    <label>
+                        Outerwear
+                        <select id="fitOuterwearSelect"></select>
+                    </label>
+                    <label>
+                        Shoes
+                        <select id="fitShoesSelect"></select>
+                    </label>
+                    <label>
+                        Bag
+                        <select id="fitBagSelect"></select>
+                    </label>
+                </div>
+                <div class="tool-output" id="fittingSummary"></div>
+                <div class="realistic-tryon-card">
+                    <div>
+                        <strong>Realistic Image Try-On</strong>
+                        <p>Enable after connecting an AI virtual try-on model: users choose an avatar or authorize a real photo, then the system generates a more realistic try-on image.</p>
+                    </div>
+                    <span class="pill warn">AI Later</span>
+                </div>
+            </article>
+        </section>
+    </section>
+
+    <section id="toolsPage" class="page-panel">
+        <section class="tools-grid">
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Outfit Calendar</h2>
+                </div>
+                <p class="tool-copy">Track daily outfits and build weekly/monthly outfit reviews later.</p>
+                <button class="ghost-button" id="calendarTodayButton" type="button">Log Today's Outfit</button>
+                <div class="tool-output" id="calendarOutput"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Care Reminders</h2>
+                </div>
+                <div class="tool-output" id="careReminderList"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Idle Wardrobe</h2>
+                </div>
+                <div class="tool-output" id="idleReminderList"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Color Analysis</h2>
+                </div>
+                <div class="color-analysis" id="colorAnalysis"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Duplicate Check</h2>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Category
+                        <input id="shoppingCategory" type="text" placeholder="top / dress / shoes">
+                    </label>
+                    <label>
+                        Color
+                        <input id="shoppingColor" type="text" placeholder="black / white">
+                    </label>
+                </div>
+                <button class="primary-button" id="shoppingCheckButton" type="button">Check Similar Items</button>
+                <div class="tool-output" id="shoppingCheckResult"></div>
+            </article>
+
+            <article class="tool-card feature-wide">
+                <div class="section-heading">
+                    <h2>Shopping Decisions</h2>
+                    <button class="ghost-button" id="refreshShoppingAdviceButton" type="button">Refresh Advice</button>
+                </div>
+                <p class="tool-copy">Personal-first wardrobe guidance: what is missing, what to avoid, and where budget should go.</p>
+                <div class="shopping-decision-grid" id="shoppingDecisionOutput"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Saved Outfits</h2>
+                </div>
+                <p class="tool-copy">Save recommended plans locally first; account sync can come later.</p>
+                <button class="ghost-button" id="favoriteCurrentOutfitButton" type="button">Save Current Outfit</button>
+                <div class="tool-output" id="favoriteOutfitList"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Occasion Templates</h2>
+                </div>
+                <div class="template-grid" id="occasionTemplates"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Travel Packing</h2>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Destination
+                        <input id="travelDestination" type="text" placeholder="Paris">
+                    </label>
+                    <label>
+                        Days
+                        <input id="travelDays" type="number" min="1" max="60" value="3">
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Season
+                        <select id="travelSeason">
+                            <option value="spring">Spring</option>
+                            <option value="summer">Summer</option>
+                            <option value="autumn">Autumn</option>
+                            <option value="winter">Winter</option>
+                        </select>
+                    </label>
+                    <label>
+                        Occasion
+                        <select id="travelOccasion">
+                            <option value="casual">Casual</option>
+                            <option value="work">Work / Business Trip</option>
+                            <option value="party">Party</option>
+                            <option value="sport">Sport</option>
+                        </select>
+                    </label>
+                </div>
+                <label>
+                    Expected temperature °C
+                    <input id="travelTemperature" type="number" min="-20" max="45" value="22">
+                </label>
+                <button class="ghost-button" id="travelPlanButton" type="button">Generate Packing List</button>
+                <div class="travel-add-row">
+                    <input id="travelCustomItem" type="text" placeholder="Add item, e.g. sunscreen">
+                    <input id="travelCustomQuantity" type="number" min="1" max="99" value="1" aria-label="Quantity">
+                    <button class="ghost-button" id="travelAddItemButton" type="button">Add</button>
+                </div>
+                <div class="tool-output" id="travelPlanOutput"></div>
+            </article>
+
+            <article class="tool-card">
+                <div class="section-heading">
+                    <h2>Privacy Data</h2>
+                </div>
+                <div class="tool-output" id="privacySummary"></div>
+                <button class="danger-button" id="openPrivacySettingsButton" type="button">Open Privacy Settings</button>
+            </article>
+
+            <article class="tool-card feature-wide">
+                <div class="section-heading">
+                    <h2>Authorization Center</h2>
+                    <span class="pill warn">Off by Default</span>
+                </div>
+                <p class="tool-copy">Future partner access is modeled as user-controlled switches; no data is sent to any company now.</p>
+                <div class="partner-access-panel" id="partnerAccessPanel"></div>
+                <div class="partner-field-grid">
+                    <label class="checkbox-line">
+                        <input class="partner-field" type="checkbox" value="wardrobeSummary">
+                        Aggregated Wardrobe Insights
+                    </label>
+                    <label class="checkbox-line">
+                        <input class="partner-field" type="checkbox" value="styleGoals">
+                        Occasion and Style Goals
+                    </label>
+                    <label class="checkbox-line">
+                        <input class="partner-field" type="checkbox" value="sizes">
+                        Size Information
+                    </label>
+                    <label class="checkbox-line">
+                        <input class="partner-field" type="checkbox" value="brandPreferences">
+                        Brand Preferences
+                    </label>
+                </div>
+                <div class="partner-actions">
+                    <button class="ghost-button" id="enablePartnerAccessButton" type="button">Simulate Authorization</button>
+                    <button class="danger-button" id="revokePartnerAccessButton" type="button">Revoke Authorization</button>
+                </div>
+            </article>
+        </section>
+    </section>
+
+    <section id="wellnessPage" class="page-panel">
+        <section class="notice-card">
+            <strong>Lifestyle Record Notice</strong>
+            <p>Weight, period, ovulation, and mood records are for lifestyle reminders only. Cycle and ovulation estimates are not medical advice, diagnosis, or treatment.</p>
+        </section>
+        <section class="wellness-grid">
+            <form id="wellnessForm" class="wellness-card">
+                <div class="section-heading">
+                    <h2>Today's Record</h2>
+                    <input id="wellnessDate" class="compact-date" type="date" required>
+                </div>
+                <div class="form-row">
+                    <label>
+                        Weight kg
+                        <input id="weightKg" type="number" min="20" max="250" step="0.1" placeholder="52.5">
+                    </label>
+                    <label>
+                        Mood
+                        <select id="mood">
+                            <option value="">Not Recorded</option>
+                            <option value="calm">Calm</option>
+                            <option value="happy">Happy</option>
+                            <option value="tired">Tired</option>
+                            <option value="anxious">Anxious</option>
+                            <option value="low">Low</option>
+                            <option value="angry">Irritated</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label class="checkbox-line">
+                        <input id="periodStart" type="checkbox">
+                        Period Started
+                    </label>
+                    <label class="checkbox-line">
+                        <input id="periodDay" type="checkbox">
+                        During Period
+                    </label>
+                </div>
+                <label>
+                    Important Events Today
+                    <textarea id="importantEvents" rows="3" placeholder="Work, relationships, exercise, sleep, food, etc."></textarea>
+                </label>
+                <label>
+                    Notes
+                    <textarea id="wellnessNotes" rows="3" placeholder="Body feelings, cramps, headache, appetite, sleep, etc."></textarea>
+                </label>
+                <button class="primary-button" type="submit">SaveToday's Record</button>
+            </form>
+
+            <aside class="wellness-card">
+                <div class="section-heading">
+                    <h2>Cycle Reminder</h2>
+                    <button class="ghost-button" id="refreshWellnessButton" type="button">Refresh</button>
+                </div>
+                <div class="cycle-settings">
+                    <label>
+                        Cycle Days
+                        <input id="cycleLength" type="number" min="20" max="45" step="1" value="28">
+                    </label>
+                    <label>
+                        PeriodDays
+                        <input id="periodLength" type="number" min="2" max="10" step="1" value="5">
+                    </label>
+                </div>
+                <div class="wellness-alert" id="cycleAlert"></div>
+                <p class="quiet-note">Reminders are estimated from your recorded period start date for daily tracking only, not medical advice.</p>
+            </aside>
+        </section>
+
+        <section class="wellness-card">
+            <div class="section-heading">
+                <h2>Recent Records</h2>
+            </div>
+            <div class="wellness-list" id="wellnessList"></div>
+        </section>
+    </section>
+</main>
+
+<dialog id="itemDialog">
+    <form id="itemForm" method="dialog" class="item-form">
+        <div class="dialog-heading">
+            <h2 id="dialogTitle">Add Item</h2>
+            <button class="icon-button" id="closeDialogButton" type="button" title="Close" aria-label="Close">×</button>
+        </div>
+
+        <input type="hidden" id="itemId">
+        <input type="hidden" id="imageUrl">
+
+        <label>
+            Image
+            <input id="imageFile" type="file" accept="image/*">
+        </label>
+
+        <label>
+            Name
+            <input id="name" type="text" placeholder="Black wool coat">
+        </label>
+
+        <div class="form-row">
+            <label>
+                Category
+                <input id="category" type="text" required placeholder="Outerwear">
+            </label>
+            <label>
+                Color
+                <input id="color" type="text" required placeholder="black">
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label>
+                Season
+                <select id="season" required>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                </select>
+            </label>
+            <label>
+                Occasion
+                <select id="occasion" required>
+                    <option value="work">Work</option>
+                    <option value="casual">Casual</option>
+                    <option value="party">Party</option>
+                    <option value="sport">Sport</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label>
+                Material
+                <input id="material" type="text" placeholder="wool">
+            </label>
+            <label>
+                Size
+                <input id="sizeLabel" type="text" placeholder="M / 38 / One size">
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label>
+                Brand
+                <input id="brand" type="text" placeholder="Brand or designer">
+            </label>
+            <label>
+                Price
+                <input id="price" type="number" min="0" step="0.01" placeholder="0.00">
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label>
+                Purchase Date
+                <input id="purchaseDate" type="date">
+            </label>
+            <label>
+                Outfit Adoption Count
+                <input id="outfitAdoptionCount" type="number" min="0" step="1" value="0">
+            </label>
+        </div>
+
+        <label class="checkbox-line">
+            <input id="specialCare" type="checkbox">
+            Special material care
+        </label>
+
+        <label class="checkbox-line">
+            <input id="specialTag" type="checkbox">
+            Meaningful item
+        </label>
+
+        <label>
+            Care Instructions
+            <textarea id="careInstructions" rows="3" placeholder="Dry clean, low heat iron, avoid direct sunlight"></textarea>
+        </label>
+
+        <label>
+            Special Meaning
+            <textarea id="specialMeaning" rows="3" placeholder="Anniversary gift, birthday gift, handmade by family, heirloom, etc."></textarea>
+        </label>
+
+        <label>
+            Recycling Notes
+            <textarea id="recyclingNotes" rows="3" placeholder="Resale platform, community recycling bin, donation channel"></textarea>
+        </label>
+
+        <div class="dialog-actions">
+            <button class="ghost-button" id="deleteButton" type="button">Delete</button>
+            <button class="primary-button" id="saveButton" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="importDialog">
+    <form id="importForm" method="dialog" class="item-form import-form">
+        <div class="dialog-heading">
+            <div>
+                <h2>Confirm Batch Import</h2>
+                <p class="dialog-subtitle">Images are used only for private wardrobe import and classification drafts. You can edit every item before saving.</p>
+            </div>
+            <button class="icon-button" id="closeImportButton" type="button" title="Close" aria-label="Close">×</button>
+        </div>
+        <div class="import-list" id="importList"></div>
+        <div class="dialog-actions">
+            <button class="ghost-button" id="cancelImportButton" type="button">Cancel</button>
+            <button class="primary-button" id="saveImportButton" type="submit">AllSave</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="settingsDialog">
+    <form id="settingsForm" method="dialog" class="item-form">
+        <div class="dialog-heading">
+            <h2>API Settings</h2>
+            <button class="icon-button" id="closeSettingsButton" type="button" title="Close" aria-label="Close">×</button>
+        </div>
+        <label>
+            Backend URL
+            <input id="apiBaseUrl" type="url" placeholder="http://192.168.1.10:8080">
+        </label>
+        <section class="privacy-panel">
+            <h3>Privacy and Image Data</h3>
+            <p>Current mode: private wardrobe. Images are used only for wardrobe management, planned AI recognition, and outfit recommendations, not public community display.</p>
+            <ul>
+                <li>Maximum 5 MB per image</li>
+                <li>Maximum 30 images per batch import</li>
+                <li>Deleting an item also deletes its local uploaded image</li>
+            </ul>
+            <button class="danger-button" id="deleteAllDataButton" type="button">Clear wardrobe and local images</button>
+            <button class="danger-button" id="deleteWellnessDataButton" type="button">ClearWellness</button>
+        </section>
+        <div class="dialog-actions">
+            <button class="ghost-button" id="resetApiButton" type="button">Use Current Address</button>
+            <button class="primary-button" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#fff0ee"/>
+  <path d="M260 95h120l38 170 96 340H126l96-340 38-170z" fill="#c84943" stroke="#a53833" stroke-width="12"/>
+  <path d="M260 95l60 88 60-88M223 265h194" fill="none" stroke="#f2c7c3" stroke-width="10"/>
+  <text x="320" y="720" text-anchor="middle" font-family="Arial" font-size="44" font-weight="700" fill="#b4543f">Red Dress</text>
+</svg>
