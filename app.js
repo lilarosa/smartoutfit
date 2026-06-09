@@ -12,6 +12,8 @@ const defaultApiBaseUrl = window.location.protocol === "capacitor:"
     : window.location.protocol === "file:"
         ? "http://localhost:8080"
         : window.location.origin;
+const appScriptUrl = document.querySelector('script[src$="app.js"]')?.src;
+const staticAssetBaseUrl = new URL(".", appScriptUrl || window.location.href);
 
 const els = {
     grid: document.querySelector("#clothesGrid"),
@@ -215,7 +217,8 @@ function assetUrl(path) {
         }
         return parsed.toString();
     } catch (error) {
-        return new URL(path, window.location.href).toString();
+        const localPath = path.startsWith("/") ? path.slice(1) : path;
+        return new URL(localPath, staticAssetBaseUrl).toString();
     }
 }
 
@@ -943,6 +946,44 @@ async function recordWear(id) {
     }
 }
 
+function localOutfitPlans({occasion, season, temperature, colorPreference = ""}) {
+    const preferredColor = colorPreference.trim().toLowerCase();
+    const rankedItems = [...state.clothes].sort((a, b) => {
+        const aScore = Number(a.favoriteScore || 0) + Number(a.wearCount || 0);
+        const bScore = Number(b.favoriteScore || 0) + Number(b.wearCount || 0);
+        return bScore - aScore;
+    });
+    const candidates = rankedItems.filter((item) => {
+        const occasionMatch = !occasion || item.occasion === occasion;
+        const seasonMatch = !season || item.season === season || ["spring", "autumn"].includes(season);
+        const colorMatch = !preferredColor || (item.color || "").toLowerCase().includes(preferredColor);
+        return occasionMatch && seasonMatch && colorMatch;
+    });
+    const pool = candidates.length ? candidates : rankedItems;
+    const pick = (category) =>
+        pool.find((item) => normalizeCategory(item.category) === category)
+        || rankedItems.find((item) => normalizeCategory(item.category) === category);
+    const dress = pick("dress");
+    const items = dress
+        ? [dress, pick("outerwear"), pick("shoes"), pick("bag")]
+        : [pick("top"), pick("bottom"), pick("outerwear"), pick("shoes"), pick("bag")];
+    const selectedItems = items.filter(Boolean);
+
+    if (!selectedItems.length) {
+        return [];
+    }
+
+    const warmLayer = Number(temperature) <= 12 ? "layered" : "quick";
+    return [{
+        title: dress ? `One-piece ${warmLayer} outfit` : `Balanced ${warmLayer} outfit`,
+        occasion,
+        season,
+        temperature,
+        items: selectedItems,
+        explanation: "Generated locally from wardrobe categories, weather, season, and occasion.",
+    }];
+}
+
 async function recommendOutfits(event) {
     event.preventDefault();
     els.outfitResults.innerHTML = `<div class="image-placeholder">Generating outfits</div>`;
@@ -958,8 +999,14 @@ async function recommendOutfits(event) {
         });
         renderOutfitPlans(plans);
     } catch (error) {
-        els.outfitResults.innerHTML = `<div class="image-placeholder">Recommendation failed</div>`;
-        showToast("Outfit recommendation failed");
+        const fallbackPlans = localOutfitPlans({
+            occasion: els.outfitOccasion.value,
+            season: els.outfitSeason.value,
+            temperature: els.outfitTemperature.value,
+            colorPreference: els.outfitColor.value,
+        });
+        renderOutfitPlans(fallbackPlans);
+        showToast("Generated locally for demo mode");
     }
 }
 
@@ -1018,7 +1065,31 @@ async function renderHomeRecommendation() {
         </article>
     `;
     } catch (error) {
-        els.homeRecommendation.innerHTML = `<div class="image-placeholder">Today's recommendation failed</div>`;
+        const fallbackPlan = localOutfitPlans({
+            occasion: els.homeOccasion.value,
+            season: els.homeSeason.value,
+            temperature: els.homeTemperature.value,
+        })[0];
+        if (!fallbackPlan) {
+            els.homeRecommendation.innerHTML = `<div class="image-placeholder">Today's recommendation failed</div>`;
+            return;
+        }
+        els.homeRecommendation.innerHTML = `
+            <article class="home-outfit-card">
+                <div>
+                    <h3>${escapeHtml(fallbackPlan.title)}</h3>
+                    <p>${labelOf(fallbackPlan.occasion)} · ${labelOf(fallbackPlan.season)} · ${fallbackPlan.temperature}°C</p>
+                </div>
+                <div class="home-outfit-pieces">
+                    ${fallbackPlan.items.slice(0, 4).map((item) => `
+                        <div class="mini-piece">
+                            ${imageMarkup(item)}
+                            <span>${escapeHtml(item.name || item.category)}</span>
+                        </div>
+                    `).join("")}
+                </div>
+            </article>
+        `;
     }
 }
 
