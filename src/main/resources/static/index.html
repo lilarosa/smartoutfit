@@ -111,19 +111,19 @@
 
         <section id="browseSection" class="home-section browse-section" hidden>
             <div class="section-heading">
-                <h2>AllItem</h2>
+                <h2>All Items</h2>
                 <button class="ghost-button" id="closeBrowseButton" type="button">Collapse</button>
             </div>
             <section class="filters" aria-label="Wardrobe filters">
                 <select id="seasonFilter" aria-label="Season">
-                    <option value="">AllSeason</option>
+                    <option value="">All Seasons</option>
                     <option value="spring">Spring</option>
                     <option value="summer">Summer</option>
                     <option value="autumn">Autumn</option>
                     <option value="winter">Winter</option>
                 </select>
                 <select id="occasionFilter" aria-label="Occasion">
-                    <option value="">AllOccasion</option>
+                    <option value="">All Occasions</option>
                     <option value="work">Work</option>
                     <option value="casual">Casual</option>
                     <option value="party">Party</option>
@@ -540,7 +540,7 @@
                     Notes
                     <textarea id="wellnessNotes" rows="3" placeholder="Body feelings, cramps, headache, appetite, sleep, etc."></textarea>
                 </label>
-                <button class="primary-button" type="submit">SaveToday's Record</button>
+                <button class="primary-button" type="submit">Save Today's Record</button>
             </form>
 
             <aside class="wellness-card">
@@ -554,7 +554,7 @@
                         <input id="cycleLength" type="number" min="20" max="45" step="1" value="28">
                     </label>
                     <label>
-                        PeriodDays
+                        Period Days
                         <input id="periodLength" type="number" min="2" max="10" step="1" value="5">
                     </label>
                 </div>
@@ -701,7 +701,7 @@
         <div class="import-list" id="importList"></div>
         <div class="dialog-actions">
             <button class="ghost-button" id="cancelImportButton" type="button">Cancel</button>
-            <button class="primary-button" id="saveImportButton" type="submit">AllSave</button>
+            <button class="primary-button" id="saveImportButton" type="submit">Save All</button>
         </div>
     </form>
 </dialog>
@@ -725,7 +725,7 @@
                 <li>Deleting an item also deletes its local uploaded image</li>
             </ul>
             <button class="danger-button" id="deleteAllDataButton" type="button">Clear wardrobe and local images</button>
-            <button class="danger-button" id="deleteWellnessDataButton" type="button">ClearWellness</button>
+            <button class="danger-button" id="deleteWellnessDataButton" type="button">Clear Wellness</button>
         </section>
         <div class="dialog-actions">
             <button class="ghost-button" id="resetApiButton" type="button">Use Current Address</button>

@@ -859,9 +859,9 @@ async function saveImportDrafts(event) {
         state.importDrafts = [];
         els.importDialog.close();
         await loadClothes();
-        showToast("Batch ImportSaved");
+        showToast("Batch import saved");
     } catch (error) {
-        showToast("SaveBatch import failed");
+        showToast("Batch import save failed");
     } finally {
         document.querySelector("#saveImportButton").disabled = false;
     }
@@ -1485,9 +1485,9 @@ async function saveCalendarToday() {
             }),
         });
         await renderCalendarEntries();
-        showToast("Today's OutfitSaved");
+        showToast("Today's outfit saved");
     } catch (error) {
-        showToast("Outfit CalendarSave failed");
+        showToast("Outfit calendar save failed");
     }
 }
 
@@ -1932,7 +1932,7 @@ async function saveWellnessEntry(event) {
     try {
         await request("/wellness/entries", {method: "POST", body: JSON.stringify(payload)});
         await loadWellnessEntries();
-        showToast("WellnessSaved");
+        showToast("Wellness saved");
     } catch (error) {
         showToast("WellnessSave failed");
     }
