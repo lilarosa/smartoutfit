@@ -204,6 +204,10 @@ function assetUrl(path) {
         return path;
     }
 
+    if (path.startsWith("/uploads/")) {
+        return apiUrl(path).toString();
+    }
+
     try {
         const parsed = new URL(path);
         if ((parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") && parsed.pathname.startsWith("/uploads/")) {
@@ -211,7 +215,7 @@ function assetUrl(path) {
         }
         return parsed.toString();
     } catch (error) {
-        return apiUrl(path).toString();
+        return new URL(path, window.location.href).toString();
     }
 }
 
