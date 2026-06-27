@@ -1,4 +1,4 @@
-const CACHE_NAME = "smart-outfit-v30";
+const CACHE_NAME = "smart-outfit-v31-tools";
 const APP_ASSETS = [
     "./",
     "index.html",

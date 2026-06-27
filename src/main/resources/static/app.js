@@ -3,6 +3,7 @@ const state = {
     selectedId: null,
     importDrafts: [],
     wellnessEntries: [],
+    journalPage: 0,
     currentTravelList: null,
     activePage: "closet",
 };
@@ -51,6 +52,7 @@ const els = {
     homeOccasion: document.querySelector("#homeOccasion"),
     outfitForm: document.querySelector("#outfitForm"),
     outfitOccasion: document.querySelector("#outfitOccasion"),
+    occasionCarousel: document.querySelector("#occasionCarousel"),
     outfitSeason: document.querySelector("#outfitSeason"),
     outfitTemperature: document.querySelector("#outfitTemperature"),
     outfitColor: document.querySelector("#outfitColor"),
@@ -74,6 +76,9 @@ const els = {
     fitLayerShoes: document.querySelector("#fitLayerShoes"),
     fitLayerBag: document.querySelector("#fitLayerBag"),
     fittingSummary: document.querySelector("#fittingSummary"),
+    aiTryonDemoImage: document.querySelector("#aiTryonDemoImage"),
+    aiTryonDemoTitle: document.querySelector("#aiTryonDemoTitle"),
+    aiTryonDemoSubtitle: document.querySelector("#aiTryonDemoSubtitle"),
     wellnessForm: document.querySelector("#wellnessForm"),
     wellnessDate: document.querySelector("#wellnessDate"),
     weightKg: document.querySelector("#weightKg"),
@@ -86,16 +91,17 @@ const els = {
     cycleAlert: document.querySelector("#cycleAlert"),
     cycleLength: document.querySelector("#cycleLength"),
     periodLength: document.querySelector("#periodLength"),
+    careDialog: document.querySelector("#careDialog"),
+    careDialogTitle: document.querySelector("#careDialogTitle"),
+    careDialogBody: document.querySelector("#careDialogBody"),
     calendarOutput: document.querySelector("#calendarOutput"),
-    careReminderList: document.querySelector("#careReminderList"),
     idleReminderList: document.querySelector("#idleReminderList"),
     colorAnalysis: document.querySelector("#colorAnalysis"),
+    nextBuyPanel: document.querySelector("#nextBuyPanel"),
     shoppingCategory: document.querySelector("#shoppingCategory"),
     shoppingColor: document.querySelector("#shoppingColor"),
     shoppingCheckResult: document.querySelector("#shoppingCheckResult"),
-    shoppingDecisionOutput: document.querySelector("#shoppingDecisionOutput"),
     favoriteOutfitList: document.querySelector("#favoriteOutfitList"),
-    occasionTemplates: document.querySelector("#occasionTemplates"),
     travelDestination: document.querySelector("#travelDestination"),
     travelDays: document.querySelector("#travelDays"),
     travelSeason: document.querySelector("#travelSeason"),
@@ -279,14 +285,14 @@ function switchPage(page) {
         button.classList.toggle("active", button.dataset.page === page);
     });
     els.topTitle.textContent = page === "wellness"
-        ? "Wellness"
+        ? "健康记录"
         : page === "outfits"
-            ? "Outfit Planner"
+            ? "穿搭规划"
             : page === "fitting"
-                ? "My Fitting Mirror"
+                ? "换装镜"
                 : page === "tools"
-                    ? "Tools"
-                    : "My Wardrobe";
+                    ? "工具箱"
+                    : "Smart Outfit";
 
     if (page === "wellness") {
         loadWellnessEntries();
@@ -309,6 +315,7 @@ function showBrowseSection() {
 
 function hideBrowseSection() {
     els.browseSection.hidden = true;
+    closeDetailPanel();
 }
 
 async function request(path, options = {}) {
@@ -508,6 +515,31 @@ function imageMarkup(item, className = "") {
     return `<div class="image-placeholder ${className}">${escapeHtml(item.category || "Item")}</div>`;
 }
 
+function isCareItem(item) {
+    const material = String(item.material || "").toLowerCase();
+    return Boolean(item.specialCare) || ["leather", "真皮", "皮革", "wool", "羊毛", "silk", "真丝", "丝绸", "cashmere", "羊绒"].some((keyword) => material.includes(keyword));
+}
+
+function careIconLabel(item) {
+    const material = String(item.material || "").toLowerCase();
+    if (material.includes("leather") || material.includes("真皮") || material.includes("皮革")) return "真皮护理";
+    if (material.includes("wool") || material.includes("羊毛") || material.includes("cashmere") || material.includes("羊绒")) return "羊毛护理";
+    if (material.includes("silk") || material.includes("真丝") || material.includes("丝绸")) return "真丝护理";
+    return "护理";
+}
+
+function itemMediaMarkup(item, className = "") {
+    const careBadge = isCareItem(item)
+        ? `<button class="item-care-button" type="button" data-care-id="${item.id}" title="${escapeHtml(careIconLabel(item))}" aria-label="${escapeHtml(careIconLabel(item))}">✦</button>`
+        : "";
+    return `
+        <div class="item-media ${className}">
+            ${imageMarkup(item)}
+            ${careBadge}
+        </div>
+    `;
+}
+
 function filteredClothes() {
     let items = [...state.clothes];
     if (els.seasonFilter.value) {
@@ -535,29 +567,37 @@ function renderGrid() {
     const items = filteredClothes();
     if (items.length === 0) {
         els.grid.innerHTML = `<div class="image-placeholder">No items yet</div>`;
+        closeDetailPanel();
         return;
     }
 
     els.grid.innerHTML = items.map((item) => `
-        <button class="clothing-card" type="button" data-id="${item.id}">
-            ${imageMarkup(item)}
-            <div class="card-body">
-                <p class="card-title">${escapeHtml(item.name || item.category)}</p>
-                <div class="meta-line">
-                    <span class="pill">${labelOf(item.season)}</span>
-                    <span class="pill">${labelOf(item.occasion)}</span>
-                    <span class="pill">${item.wearCount || 0} times</span>
-                    ${item.specialCare ? `<span class="pill warn">Care</span>` : ""}
-                    ${item.unwornOverOneYear ? `<span class="pill warn">Idle</span>` : ""}
+        <article class="clothing-card" data-id="${item.id}">
+            <button class="card-open" type="button" data-id="${item.id}">
+                ${itemMediaMarkup(item)}
+                <div class="card-body">
+                    <p class="card-title">${escapeHtml(item.name || item.category)}</p>
+                    <div class="meta-line">
+                        <span class="pill">${labelOf(item.season)}</span>
+                        <span class="pill">${labelOf(item.occasion)}</span>
+                        <span class="pill">${item.wearCount || 0} times</span>
+                        ${item.unwornOverOneYear ? `<span class="pill warn">闲置</span>` : ""}
+                    </div>
                 </div>
-            </div>
-        </button>
+            </button>
+        </article>
     `).join("");
 
-    els.grid.querySelectorAll(".clothing-card").forEach((card) => {
+    els.grid.querySelectorAll(".card-open").forEach((card) => {
         card.addEventListener("click", () => {
             state.selectedId = Number(card.dataset.id);
             renderSelectedDetail();
+        });
+    });
+    els.grid.querySelectorAll(".item-care-button").forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openCareDialog(Number(button.dataset.careId));
         });
     });
 }
@@ -570,34 +610,45 @@ function renderHomeRecent() {
     }
 
     els.recentGrid.innerHTML = recentItems.map((item) => `
-        <button class="recent-card" type="button" data-id="${item.id}">
-            ${imageMarkup(item)}
-            <div>
-                <strong>${escapeHtml(item.name || item.category)}</strong>
-                <p>${labelOf(item.season)} · ${labelOf(item.occasion)}</p>
-            </div>
-        </button>
+        <article class="recent-card" data-id="${item.id}">
+            <button class="recent-open" type="button" data-id="${item.id}">
+                ${itemMediaMarkup(item)}
+                <div>
+                    <strong>${escapeHtml(item.name || item.category)}</strong>
+                    <p>${labelOf(item.season)} · ${labelOf(item.occasion)}</p>
+                </div>
+            </button>
+        </article>
     `).join("");
 
-    els.recentGrid.querySelectorAll(".recent-card").forEach((card) => {
+    els.recentGrid.querySelectorAll(".recent-open").forEach((card) => {
         card.addEventListener("click", () => {
             state.selectedId = Number(card.dataset.id);
             showBrowseSection();
             renderSelectedDetail();
         });
     });
+    els.recentGrid.querySelectorAll(".item-care-button").forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openCareDialog(Number(button.dataset.careId));
+        });
+    });
 }
 
 function renderSelectedDetail() {
-    const selected = state.clothes.find((item) => item.id === state.selectedId) || state.clothes[0];
+    const selected = state.clothes.find((item) => item.id === state.selectedId);
     if (!selected) {
-        els.detail.innerHTML = `<div class="empty-detail"><p>Select an item to view details</p></div>`;
+        closeDetailPanel();
         return;
     }
 
     state.selectedId = selected.id;
+    els.detail.classList.add("is-open");
+    els.detail.setAttribute("aria-hidden", "false");
     els.detail.innerHTML = `
-        ${imageMarkup(selected, "detail-visual")}
+        <button class="detail-close icon-button" id="closeDetailButton" type="button" title="Close detail" aria-label="Close detail">×</button>
+        ${itemMediaMarkup(selected, "detail-media")}
         <div class="detail-content">
             <h2>${escapeHtml(selected.name || selected.category)}</h2>
             <div class="meta-line">
@@ -637,8 +688,39 @@ function renderSelectedDetail() {
         </div>
     `;
 
+    document.querySelector("#closeDetailButton").addEventListener("click", closeDetailPanel);
     document.querySelector("#wearButton").addEventListener("click", () => recordWear(selected.id));
     document.querySelector("#editButton").addEventListener("click", () => openDialog(selected));
+    els.detail.querySelector(".item-care-button")?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openCareDialog(selected.id);
+    });
+}
+
+function openCareDialog(id) {
+    const item = state.clothes.find((entry) => entry.id === id);
+    if (!item) return;
+
+    const material = item.material || "未填写材质";
+    const care = item.careInstructions || `${careIconLabel(item)}：请查看洗标，避免高温、暴晒和强力摩擦。`;
+    els.careDialogTitle.textContent = `${item.name || item.category} 护理`;
+    els.careDialogBody.innerHTML = `
+        ${imageMarkup(item, "care-dialog-image")}
+        <div class="care-info-panel">
+            <span class="care-symbol">${escapeHtml(careIconLabel(item))}</span>
+            <p><strong>材质</strong>${escapeHtml(material)}</p>
+            <p><strong>护理方式</strong>${escapeHtml(care)}</p>
+            ${item.recyclingNotes ? `<p><strong>回收/处理</strong>${escapeHtml(item.recyclingNotes)}</p>` : ""}
+        </div>
+    `;
+    els.careDialog.showModal();
+}
+
+function closeDetailPanel() {
+    state.selectedId = null;
+    els.detail.classList.remove("is-open");
+    els.detail.setAttribute("aria-hidden", "true");
+    els.detail.innerHTML = "";
 }
 
 function formatDateTime(value) {
@@ -985,7 +1067,7 @@ function localOutfitPlans({occasion, season, temperature, colorPreference = ""})
 }
 
 async function recommendOutfits(event) {
-    event.preventDefault();
+    event?.preventDefault();
     els.outfitResults.innerHTML = `<div class="image-placeholder">Generating outfits</div>`;
 
     try {
@@ -1135,11 +1217,22 @@ async function useLocationWeather() {
 
 function renderEmptyOutfitState() {
     els.outfitResults.innerHTML = `
-        <div class="empty-outfit-state">
-            <h2>Choose an occasion to generate outfits</h2>
-            <p>Recommendations pick wardrobe items and combine them into visual outfit plans.</p>
+        <div class="empty-outfit-state outfit-prompt-state">
+            <h2>先选择一个穿搭场合</h2>
+            <p>左右滑动上方卡片，选择 Party、Business、Family 等场景后再生成推荐。</p>
         </div>
     `;
+}
+
+function selectOccasionCard(card) {
+    if (!card) {
+        return;
+    }
+    els.outfitOccasion.value = card.dataset.occasion;
+    els.occasionCarousel.querySelectorAll(".occasion-card").forEach((button) => {
+        button.classList.toggle("active", button === card);
+    });
+    recommendOutfits();
 }
 
 function renderOutfitPlans(plans) {
@@ -1215,13 +1308,67 @@ function selectedFitItem(select) {
 
 function updateAvatarPreview() {
     const profile = avatarProfileFromInputs();
+    const bottomItem = selectedFitItem(els.fitBottomSelect);
     applyAvatarProfile(profile);
     updateFitLayer(els.fitLayerTop, selectedFitItem(els.fitTopSelect), "Top");
-    updateFitLayer(els.fitLayerBottom, selectedFitItem(els.fitBottomSelect), "Bottom");
+    updateFitLayer(els.fitLayerBottom, bottomItem, "Bottom");
     updateFitLayer(els.fitLayerOuterwear, selectedFitItem(els.fitOuterwearSelect), "Outerwear");
     updateFitLayer(els.fitLayerShoes, selectedFitItem(els.fitShoesSelect), "Shoes");
     updateFitLayer(els.fitLayerBag, selectedFitItem(els.fitBagSelect), "Bag");
+    els.avatarBody.dataset.hasDress = bottomItem && garmentType(bottomItem, "Bottom") === "dress" ? "true" : "false";
+    updateAiTryonDemo();
     renderFittingSummary();
+}
+
+function updateAiTryonDemo() {
+    const items = [
+        selectedFitItem(els.fitTopSelect),
+        selectedFitItem(els.fitBottomSelect),
+        selectedFitItem(els.fitOuterwearSelect),
+        selectedFitItem(els.fitShoesSelect),
+        selectedFitItem(els.fitBagSelect),
+    ].filter(Boolean);
+    const demo = chooseTryonDemo(items);
+    els.aiTryonDemoImage.src = demo.src;
+    els.aiTryonDemoTitle.textContent = demo.title;
+    els.aiTryonDemoSubtitle.textContent = demo.subtitle;
+}
+
+function chooseTryonDemo(items) {
+    const text = items.map((item) => `${item.name || ""} ${item.category || ""} ${item.color || ""}`).join(" ").toLowerCase();
+    if (text.includes("大衣") || text.includes("camel") || text.includes("coat")) {
+        return {
+            src: "models/tryon-demos/camel-coat-jeans.png",
+            title: "Winter Layered Try-On",
+            subtitle: "驼色羊毛大衣、牛仔裤和运动鞋的冬季通勤造型",
+        };
+    }
+    if (text.includes("百褶") || text.includes("pleated") || text.includes("半身裙")) {
+        return {
+            src: "models/tryon-demos/blouse-pleated-skirt.png",
+            title: "Soft Casual Try-On",
+            subtitle: "白色衬衫、百褶裙、丝巾和金色配饰的温柔日常造型",
+        };
+    }
+    if (text.includes("西裤") || text.includes("trousers") || text.includes("乐福")) {
+        return {
+            src: "models/tryon-demos/business-blouse-trousers.png",
+            title: "Business Try-On",
+            subtitle: "白色真丝衬衫、黑色西裤和乐福鞋的商务造型",
+        };
+    }
+    if (text.includes("红色") || text.includes("缎面") || text.includes("dress") || text.includes("blazer")) {
+        return {
+            src: "models/tryon-demos/party-red-dress-blazer.png",
+            title: "Party Try-On",
+            subtitle: "红色缎面裙、西装外套、白色运动鞋和棕色肩背包",
+        };
+    }
+    return {
+        src: "models/tryon-demos/party-red-dress-blazer.png",
+        title: "Generated Try-On Preview",
+        subtitle: "选择不同衣物后，演示图会切换到最接近的 AI 试穿结果",
+    };
 }
 
 function avatarProfileFromInputs() {
@@ -1270,26 +1417,51 @@ function loadAvatarProfile() {
 function updateFitLayer(layer, item, fallback) {
     layer.classList.toggle("empty", !item);
     layer.dataset.garment = item ? garmentType(item, fallback) : "empty";
+    layer.dataset.fitLength = item ? fitLengthType(item, fallback) : "empty";
     if (!item) {
         layer.innerHTML = `<span>${fallback}</span>`;
         layer.style.removeProperty("--fit-color");
         layer.style.removeProperty("--fit-accent");
+        layer.style.removeProperty("--fit-image");
         return;
     }
+    const tryOnImageUrl = fittingImageUrl(item.imageUrl);
     layer.style.setProperty("--fit-color", colorToFitColor(item.color));
     layer.style.setProperty("--fit-accent", fitAccentColor(item.color));
-    layer.innerHTML = `<span>${escapeHtml(item.name || item.category)}</span>`;
+    layer.style.setProperty("--fit-image", `url("${assetUrl(tryOnImageUrl || "")}")`);
+    layer.innerHTML = `
+        ${tryOnImageUrl ? `<img class="fit-garment-image" src="${escapeHtml(assetUrl(tryOnImageUrl))}" alt="${escapeHtml(item.name || item.category)}">` : ""}
+        <span>${escapeHtml(item.name || item.category)}</span>
+    `;
+}
+
+function fittingImageUrl(imageUrl = "") {
+    if (!imageUrl.includes("/sample-clothes/realistic/") || imageUrl.includes("/transparent/")) {
+        return imageUrl.replace("/sample-clothes/realistic/transparent/", "/sample-clothes/realistic/tryon/");
+    }
+    return imageUrl.replace("/sample-clothes/realistic/", "/sample-clothes/realistic/tryon/");
 }
 
 function garmentType(item, fallback) {
     const value = `${item.category || ""} ${item.name || ""} ${fallback || ""}`.toLowerCase();
-    if (value.includes("dress") || value.includes("Dress")) return "dress";
-    if (value.includes("skirt") || value.includes("skirt")) return "skirt";
-    if (value.includes("pants") || value.includes("jeans") || value.includes("Bottom")) return "pants";
-    if (value.includes("coat") || value.includes("jacket") || value.includes("outer") || value.includes("Outerwear")) return "outerwear";
-    if (value.includes("shoe") || value.includes("Shoes")) return "shoes";
-    if (value.includes("bag") || value.includes("Bag")) return "bag";
+    if (value.includes("dress") || value.includes("连衣裙") || value.includes("吊带裙")) return "dress";
+    if (value.includes("skirt") || value.includes("半身裙") || value.includes("百褶裙")) return "skirt";
+    if (value.includes("pants") || value.includes("trousers") || value.includes("jeans") || value.includes("西裤") || value.includes("牛仔裤") || value.includes("bottom")) return "pants";
+    if (value.includes("coat") || value.includes("大衣") || value.includes("jacket") || value.includes("blazer") || value.includes("西装") || value.includes("outer") || value.includes("outerwear")) return "outerwear";
+    if (value.includes("shoe") || value.includes("鞋") || value.includes("shoes")) return "shoes";
+    if (value.includes("bag") || value.includes("包")) return "bag";
     return "top";
+}
+
+function fitLengthType(item, fallback) {
+    const value = `${item.category || ""} ${item.name || ""} ${item.material || ""} ${fallback || ""}`.toLowerCase();
+    if (value.includes("coat") || value.includes("大衣")) return "long-outerwear";
+    if (value.includes("blazer") || value.includes("西装")) return "structured-outerwear";
+    if (value.includes("dress") || value.includes("连衣裙") || value.includes("吊带裙")) return "dress";
+    if (value.includes("skirt") || value.includes("半身裙") || value.includes("百褶裙")) return "midi-skirt";
+    if (value.includes("jeans") || value.includes("trousers") || value.includes("pants") || value.includes("西裤") || value.includes("牛仔裤")) return "long-pants";
+    if (value.includes("shirt") || value.includes("blouse") || value.includes("衬衫")) return "long-top";
+    return garmentType(item, fallback);
 }
 
 function colorToFitColor(color = "") {
@@ -1372,22 +1544,181 @@ async function adoptOutfitPlan(card) {
 }
 
 async function renderTools() {
-    renderCareReminders();
     renderIdleReminders();
     renderColorAnalysis();
-    renderShoppingDecision();
+    renderNextBuyRecommendation();
     await renderCalendarEntries();
     await renderFavorites();
-    renderOccasionTemplates();
     renderPrivacySummary();
     renderPartnerAccess();
 }
 
-function renderCareReminders() {
-    const items = state.clothes.filter((item) => item.specialCare || ["wool", "silk", "leather"].includes((item.material || "").toLowerCase()));
-    els.careReminderList.innerHTML = items.length
-        ? items.slice(0, 8).map((item) => `<p><strong>${escapeHtml(item.name || item.category)}</strong> needs care: ${escapeHtml(item.careInstructions || item.material || "check the care label")}</p>`).join("")
-        : `<p>No special care reminders.</p>`;
+function renderNextBuyRecommendation() {
+    if (!state.clothes.length) {
+        els.nextBuyPanel.innerHTML = `
+            <article class="next-buy-card">
+                <span class="next-buy-icon">+</span>
+                <div>
+                    <strong>先录入几件常穿衣物</strong>
+                    <p>有了上衣、下装、鞋包等基础数据后，系统才能判断真正缺什么。</p>
+                </div>
+            </article>
+        `;
+        return;
+    }
+
+    const recommendation = nextBuyRecommendation();
+    els.nextBuyPanel.innerHTML = `
+        <article class="next-buy-card">
+            <span class="next-buy-icon">${escapeHtml(recommendation.icon)}</span>
+            <div>
+                <small>最值得补充</small>
+                <strong>${escapeHtml(recommendation.title)}</strong>
+                <p>${escapeHtml(recommendation.summary)}</p>
+            </div>
+        </article>
+        <div class="next-buy-reasons">
+            ${recommendation.reasons.map((reason) => `<p>${escapeHtml(reason)}</p>`).join("")}
+        </div>
+    `;
+}
+
+function nextBuyRecommendation() {
+    const counts = countBy(state.clothes, (item) => normalizeCategory(item.category));
+    const seasonCounts = countBy(state.clothes, (item) => item.season || "unknown");
+    const occasionCounts = countBy(state.clothes, (item) => item.occasion || "unknown");
+    const colorCounts = countBy(state.clothes, (item) => normalizeColorName(item.color));
+    const total = state.clothes.length;
+    const topColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]).map(([color]) => color);
+    const neutralColor = bestNeutralColor(topColors, colorCounts);
+    const candidates = [
+        {
+            category: "top",
+            title: `${neutralColor.label}针织上衣或基础衬衫`,
+            icon: "T",
+            target: Math.max(3, Math.ceil(total * 0.24)),
+            score: Math.max(0, Math.max(3, Math.ceil(total * 0.24)) - (counts.top || 0)) * 18,
+            summary: "补一件高复用上衣，可以提高现有裤装、半裙和外套的搭配次数。",
+            reasons: [
+                `当前上衣 ${counts.top || 0} 件，下装 ${counts.bottom || 0} 件，比例还可以继续补强。`,
+                `${neutralColor.label}能接住衣柜里的主色系，重复搭配压力小。`,
+                "上衣通常比外套更高频，适合优先补一件好打底的单品。"
+            ],
+        },
+        {
+            category: "bottom",
+            title: `${neutralColor.label}高腰直筒裤`,
+            icon: "P",
+            target: Math.max(3, Math.ceil(total * 0.22)),
+            score: Math.max(0, Math.max(3, Math.ceil(total * 0.22)) - (counts.bottom || 0)) * 18,
+            summary: "稳定的下装能让上衣和外套更容易形成完整套装。",
+            reasons: [
+                `当前下装 ${counts.bottom || 0} 件，连衣裙 ${counts.dress || 0} 件。`,
+                "直筒裤覆盖通勤和日常，比强风格单品更容易复用。",
+                `${neutralColor.label}下装能降低颜色搭配难度。`
+            ],
+        },
+        {
+            category: "shoes",
+            title: `${neutralColor.label}舒适低跟鞋或短靴`,
+            icon: "S",
+            target: Math.max(2, Math.ceil(total * 0.14)),
+            score: Math.max(0, Math.max(2, Math.ceil(total * 0.14)) - (counts.shoes || 0)) * 20,
+            summary: "鞋子决定穿搭场合感，少量补充就能明显改变整体风格。",
+            reasons: [
+                `当前鞋类 ${counts.shoes || 0} 双，衣物主体共有 ${total - (counts.shoes || 0) - (counts.bag || 0) - (counts.accessory || 0)} 件。`,
+                "一双可走路的鞋能连接工作、约会和日常场景。",
+                "鞋类不足时，再多衣服也容易卡在最后一步。"
+            ],
+        },
+        {
+            category: "bag",
+            title: `${neutralColor.label}中号通勤包`,
+            icon: "B",
+            target: 2,
+            score: Math.max(0, 2 - (counts.bag || 0)) * 22,
+            summary: "包是最容易改变完整度的配件，尤其适合补齐工作和日常场景。",
+            reasons: [
+                `当前包袋 ${counts.bag || 0} 个。`,
+                "一个中号包能同时覆盖通勤、家庭聚会和轻出行。",
+                `${neutralColor.label}包袋和现有鞋、外套更容易互相呼应。`
+            ],
+        },
+        {
+            category: "accessory",
+            title: "金属或丝巾类点睛配饰",
+            icon: "*",
+            target: Math.max(3, Math.ceil(total * 0.18)),
+            score: Math.max(0, Math.max(3, Math.ceil(total * 0.18)) - (counts.accessory || 0)) * 16,
+            summary: "配饰占空间小，但能显著提升基础款的变化度。",
+            reasons: [
+                `当前配饰 ${counts.accessory || 0} 件。`,
+                "如果主体衣物已经足够，配饰比继续买大件更灵活。",
+                "丝巾、耳饰、腰带能让同一套衣服更像不同造型。"
+            ],
+        },
+        {
+            category: "outerwear",
+            title: `${weakSeason(seasonCounts).label}轻外套`,
+            icon: "O",
+            target: Math.max(2, Math.ceil(total * 0.16)),
+            score: Math.max(0, Math.max(2, Math.ceil(total * 0.16)) - (counts.outerwear || 0)) * 14,
+            summary: "外套决定第一眼轮廓，适合在季节覆盖不足时补充。",
+            reasons: [
+                `当前外套 ${counts.outerwear || 0} 件。`,
+                `${weakSeason(seasonCounts).label}衣物相对少，可以补一个过渡层。`,
+                "轻外套能把已有上衣和裙裤组合成更完整的出门造型。"
+            ],
+        },
+    ];
+
+    const weakOccasionData = weakOccasion(occasionCounts);
+    candidates.forEach((candidate) => {
+        if (candidate.category === "bag" && weakOccasionData.value === "work") candidate.score += 8;
+        if (candidate.category === "shoes" && ["work", "party"].includes(weakOccasionData.value)) candidate.score += 8;
+        if (candidate.category === "accessory" && ["party", "casual"].includes(weakOccasionData.value)) candidate.score += 7;
+        if (candidate.category === "outerwear" && weakSeason(seasonCounts).value === "winter") candidate.score += 6;
+    });
+
+    const winner = candidates.sort((a, b) => b.score - a.score)[0];
+    winner.reasons = [
+        ...winner.reasons,
+        `当前覆盖较弱的场合是${weakOccasionData.label}，这件单品能帮助补齐这个场景。`
+    ].slice(0, 3);
+    return winner;
+}
+
+function bestNeutralColor(topColors, colorCounts) {
+    const neutrals = [
+        {value: "black", label: "黑色"},
+        {value: "white", label: "白色"},
+        {value: "beige", label: "米色"},
+        {value: "gray", label: "灰色"},
+        {value: "brown", label: "棕色"},
+    ];
+    return neutrals
+        .map((color) => ({...color, count: colorCounts[color.value] || 0, dominant: topColors.includes(color.value) ? 1 : 0}))
+        .sort((a, b) => a.count - b.count || b.dominant - a.dominant)[0] || neutrals[0];
+}
+
+function weakSeason(counts) {
+    const seasons = [
+        {value: "spring", label: "春季"},
+        {value: "summer", label: "夏季"},
+        {value: "autumn", label: "秋季"},
+        {value: "winter", label: "冬季"},
+    ];
+    return seasons.sort((a, b) => (counts[a.value] || 0) - (counts[b.value] || 0))[0];
+}
+
+function weakOccasion(counts) {
+    const occasions = [
+        {value: "work", label: "工作"},
+        {value: "casual", label: "日常"},
+        {value: "party", label: "聚会"},
+        {value: "sport", label: "运动"},
+    ];
+    return occasions.sort((a, b) => (counts[a.value] || 0) - (counts[b.value] || 0))[0];
 }
 
 function renderIdleReminders() {
@@ -1396,10 +1727,10 @@ function renderIdleReminders() {
         ? items.map((item) => `
             <article class="suggestion-card">
                 <strong>${escapeHtml(item.name || item.category)}</strong>
-                <p>Long idle item. Try styling it again; if it still does not work, consider donation, resale, or recycling.</p>
+                <p>这件衣服已经较久没有穿。可以在下次搭配时重新试试，也可以继续保留。</p>
             </article>
         `).join("")
-        : `<article class="suggestion-card"><strong>Looks Good</strong><p>No long-idle items. Keep tracking outfits.</p></article>`;
+        : `<article class="suggestion-card"><strong>暂无闲置提醒</strong><p>目前没有超过一年未穿的衣物。</p></article>`;
 }
 
 function renderColorAnalysis() {
@@ -1409,7 +1740,7 @@ function renderColorAnalysis() {
     }
 
     const counts = state.clothes.reduce((acc, item) => {
-        const color = item.color || "unknown";
+        const color = normalizeColorName(item.color);
         acc[color] = (acc[color] || 0) + 1;
         return acc;
     }, {});
@@ -1417,17 +1748,104 @@ function renderColorAnalysis() {
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const dominant = sorted[0];
     const suggestion = dominant && dominant[1] / total > 0.45
-        ? `Your wardrobe has a high share of ${dominant[0]}. Try adding a bright accessory or light-colored top.`
-        : "Color distribution is balanced. Keep adding easy-to-style items around frequently worn colors.";
-    els.colorAnalysis.innerHTML = sorted
-        .sort((a, b) => b[1] - a[1])
-        .map(([color, count]) => `
-            <div class="color-row">
-                <span>${escapeHtml(color)}</span>
-                <div><i style="width:${Math.round((count / total) * 100)}%"></i></div>
-                <strong>${count}</strong>
+        ? `${colorLabel(dominant[0])}占比偏高，可以补充浅色、亮色或容易叠穿的中性色。`
+        : "颜色分布比较均衡，可以继续围绕高频颜色补充好搭配的单品。";
+    const dominantPercent = Math.round((dominant[1] / total) * 100);
+
+    els.colorAnalysis.innerHTML = `
+        <article class="color-summary-card">
+            <div>
+                <span>主色系</span>
+                <strong>${colorLabel(dominant[0])}</strong>
             </div>
-        `).join("") + `<article class="suggestion-card"><strong>Suggestion</strong><p>${escapeHtml(suggestion)}</p></article>`;
+            <div>
+                <span>占比</span>
+                <strong>${dominantPercent}%</strong>
+            </div>
+            <div>
+                <span>总件数</span>
+                <strong>${total}</strong>
+            </div>
+        </article>
+        <div class="color-bars">
+            ${sorted.map(([color, count]) => {
+                const percent = Math.round((count / total) * 100);
+                const palette = colorPalette(color);
+                return `
+                    <article class="color-row">
+                        <div class="color-name">
+                            <span class="color-swatch" style="--swatch:${palette.fill}; --swatch-border:${palette.border};"></span>
+                            <strong>${colorLabel(color)}</strong>
+                        </div>
+                        <div class="color-meter" aria-label="${colorLabel(color)} ${percent}%">
+                            <i style="width:${percent}%; --bar:${palette.fill};"></i>
+                        </div>
+                        <div class="color-count">
+                            <strong>${percent}%</strong>
+                            <span>${count}件</span>
+                        </div>
+                    </article>
+                `;
+            }).join("")}
+        </div>
+        <article class="suggestion-card"><strong>建议</strong><p>${escapeHtml(suggestion)}</p></article>
+    `;
+}
+
+function normalizeColorName(value = "") {
+    const color = value.trim().toLowerCase();
+    if (!color) return "unknown";
+    if (["black", "blk", "黑", "黑色"].some((key) => color.includes(key))) return "black";
+    if (["white", "ivory", "cream", "米白", "白", "白色"].some((key) => color.includes(key))) return "white";
+    if (["gray", "grey", "silver", "灰", "灰色"].some((key) => color.includes(key))) return "gray";
+    if (["blue", "navy", "denim", "蓝", "藏青"].some((key) => color.includes(key))) return "blue";
+    if (["red", "burgundy", "wine", "红", "酒红"].some((key) => color.includes(key))) return "red";
+    if (["pink", "rose", "粉", "玫瑰"].some((key) => color.includes(key))) return "pink";
+    if (["green", "olive", "mint", "绿", "橄榄"].some((key) => color.includes(key))) return "green";
+    if (["brown", "tan", "camel", "coffee", "棕", "咖", "驼"].some((key) => color.includes(key))) return "brown";
+    if (["beige", "khaki", "sand", "卡其", "米色"].some((key) => color.includes(key))) return "beige";
+    if (["yellow", "gold", "黄", "金"].some((key) => color.includes(key))) return "yellow";
+    if (["purple", "violet", "lilac", "紫"].some((key) => color.includes(key))) return "purple";
+    if (["orange", "coral", "橙"].some((key) => color.includes(key))) return "orange";
+    return color;
+}
+
+function colorLabel(color) {
+    const labels = {
+        black: "黑色",
+        white: "白色",
+        gray: "灰色",
+        blue: "蓝色",
+        red: "红色",
+        pink: "粉色",
+        green: "绿色",
+        brown: "棕色",
+        beige: "米色",
+        yellow: "黄色",
+        purple: "紫色",
+        orange: "橙色",
+        unknown: "未标记",
+    };
+    return labels[color] || color;
+}
+
+function colorPalette(color) {
+    const palettes = {
+        black: {fill: "#252128", border: "#252128"},
+        white: {fill: "#fffdf8", border: "#d8cec5"},
+        gray: {fill: "#9b9da3", border: "#85878d"},
+        blue: {fill: "#376aa6", border: "#2b5688"},
+        red: {fill: "#b9474d", border: "#95383d"},
+        pink: {fill: "#df83ad", border: "#c56b95"},
+        green: {fill: "#4f8b67", border: "#3f7053"},
+        brown: {fill: "#9a6a45", border: "#7d5739"},
+        beige: {fill: "#d7c09b", border: "#b69e79"},
+        yellow: {fill: "#dcb84f", border: "#b7973e"},
+        purple: {fill: "#765a9a", border: "#60487e"},
+        orange: {fill: "#d47b43", border: "#ad6336"},
+        unknown: {fill: "#c9c3bd", border: "#a9a39d"},
+    };
+    return palettes[color] || {fill: "#9b5575", border: "#7d435f"};
 }
 
 function checkShoppingDuplicate() {
@@ -1442,68 +1860,6 @@ function checkShoppingDuplicate() {
     els.shoppingCheckResult.innerHTML = matches.length
         ? `<p>Your wardrobe already has ${matches.length} similar items: ${matches.slice(0, 5).map((item) => escapeHtml(item.name || item.category)).join("、")}</p>`
         : `<p>No obvious duplicates found. Consider whether it works with existing items.</p>`;
-}
-
-function renderShoppingDecision() {
-    if (state.clothes.length === 0) {
-        els.shoppingDecisionOutput.innerHTML = `
-            <article class="suggestion-card">
-                <strong>Build Wardrobe Data First</strong>
-                <p>Import items first so the system can identify gaps, duplicate risks, and budget priorities.</p>
-            </article>
-        `;
-        return;
-    }
-
-    const categoryCounts = countBy(state.clothes, (item) => normalizeCategory(item.category));
-    const colorCounts = countBy(state.clothes, (item) => (item.color || "unknown").toLowerCase());
-    const brandCounts = countBy(
-        state.clothes.filter((item) => item.brand),
-        (item) => item.brand.trim()
-    );
-    const missing = shoppingGapSuggestions(categoryCounts);
-    const avoid = Object.entries(categoryCounts)
-        .filter(([, count]) => count >= 4)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3);
-    const idleValue = state.clothes
-        .filter((item) => (item.wearCount || 0) === 0 && Number(item.price || 0) > 0)
-        .reduce((sum, item) => sum + Number(item.price || 0), 0);
-    const dominantColor = Object.entries(colorCounts).sort((a, b) => b[1] - a[1])[0];
-    const topBrands = Object.entries(brandCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-
-    els.shoppingDecisionOutput.innerHTML = [
-        adviceCard(
-            "Buy First",
-            missing.length
-                ? `Prioritize: ${missing.map((item) => labelOf(item)).join("、")}。`
-                : "Core categories look complete. Next, add high-quality pieces by occasion."
-        ),
-        adviceCard(
-            "Avoid for Now",
-            avoid.length
-                ? `${avoid.map(([category, count]) => `${labelOf(category)}: ${count} items`).join("；")} Avoid similar purchases for now.`
-                : "No obviously overstocked category. Use duplicate check for individual purchases."
-        ),
-        adviceCard(
-            "Budget Tip",
-            idleValue > 0
-                ? `Unworn items with recorded prices are worth about ${formatMoney(idleValue)}. Style or organize them before buying more.`
-                : "Prioritize gaps and high-frequency occasions. Do not buy only because of a discount."
-        ),
-        adviceCard(
-            "Color Direction",
-            dominantColor && dominantColor[1] / state.clothes.length > 0.45
-                ? `${dominantColor[0]} is highly represented. Consider light, bright, or layering-friendly neutrals.`
-                : "Colors are balanced. Prioritize colors that pair with at least three existing items."
-        ),
-        adviceCard(
-            "Brand Preferences",
-            topBrands.length
-                ? `Frequent brands: ${topBrands.map(([brand]) => brand).join("、")}. Watch these brands for missing categories.`
-                : "Brand data is limited. Add brands in item details for better advice later."
-        ),
-    ].join("");
 }
 
 function countBy(items, getter) {
@@ -1524,11 +1880,6 @@ function normalizeCategory(category = "") {
     if (value.includes("bag") || value.includes("Bag")) return "bag";
     if (value.includes("accessory") || value.includes("Accessory")) return "accessory";
     return value || "unknown";
-}
-
-function shoppingGapSuggestions(counts) {
-    const essentials = ["top", "bottom", "outerwear", "shoes", "bag"];
-    return essentials.filter((category) => !counts[category] || counts[category] < 1);
 }
 
 function adviceCard(title, body) {
@@ -1610,31 +1961,6 @@ async function renderFavorites() {
     } catch (error) {
         els.favoriteOutfitList.innerHTML = `<p>Failed to load saved outfits.</p>`;
     }
-}
-
-function renderOccasionTemplates() {
-    const templates = [
-        ["Interview", "work", "spring", 20],
-        ["Date", "party", "summer", 24],
-        ["Work", "work", "spring", 16],
-        ["Travel", "casual", "summer", 26],
-        ["Gym", "sport", "summer", 22],
-        ["Family Gathering", "casual", "autumn", 18],
-    ];
-
-    els.occasionTemplates.innerHTML = templates.map(([name, occasion, season, temperature]) => `
-        <button type="button" data-occasion="${occasion}" data-season="${season}" data-temperature="${temperature}">${name}</button>
-    `).join("");
-
-    els.occasionTemplates.querySelectorAll("button").forEach((button) => {
-        button.addEventListener("click", () => {
-            els.outfitOccasion.value = button.dataset.occasion;
-            els.outfitSeason.value = button.dataset.season;
-            els.outfitTemperature.value = button.dataset.temperature;
-            switchPage("outfits");
-            renderEmptyOutfitState();
-        });
-    });
 }
 
 async function createTravelPlan() {
@@ -1940,7 +2266,9 @@ function buildPartnerInsightPreview(fields) {
     const parts = [];
     if (fields.includes("wardrobeSummary")) {
         const counts = countBy(state.clothes, (item) => normalizeCategory(item.category));
-        const missing = shoppingGapSuggestions(counts).map(labelOf);
+        const missing = ["top", "bottom", "outerwear", "shoes", "bag"]
+            .filter((category) => !counts[category] || counts[category] < 1)
+            .map(labelOf);
         parts.push(`Missing categories: ${missing.length ? missing.join("、") : "No obvious gaps"}`);
     }
     if (fields.includes("styleGoals")) {
@@ -2063,25 +2391,47 @@ function renderCycleAlert() {
 
 function renderWellnessList() {
     if (state.wellnessEntries.length === 0) {
-        els.wellnessList.innerHTML = `<div class="image-placeholder">No wellness records yet</div>`;
+        els.wellnessList.innerHTML = `
+            <article class="diary-book is-empty">
+                <div class="diary-cover">
+                    <span>Diary</span>
+                    <strong>我的日记本</strong>
+                    <p>还没有记录</p>
+                </div>
+            </article>
+        `;
         return;
     }
 
-    els.wellnessList.innerHTML = state.wellnessEntries.slice(0, 20).map((entry) => `
-        <article class="wellness-row">
-            <div>
-                <strong>${escapeHtml(entry.entryDate)}</strong>
-                <p>${entry.weightKg ? `${entry.weightKg} kg` : "Weight not recorded"} · ${labelOf(entry.mood)}</p>
+    const entries = state.wellnessEntries.slice(0, 20);
+    state.journalPage = Math.min(Math.max(state.journalPage, 0), entries.length - 1);
+    const entry = entries[state.journalPage];
+    const pageNumber = state.journalPage + 1;
+
+    els.wellnessList.innerHTML = `
+        <article class="diary-book">
+            <div class="diary-cover">
+                <span>Diary</span>
+                <strong>我的日记本</strong>
+                <p>${pageNumber} / ${entries.length}</p>
             </div>
-            <div class="meta-line">
-                ${entry.periodStart ? `<span class="pill warn">Period Started</span>` : ""}
-                ${entry.periodDay && !entry.periodStart ? `<span class="pill warn">Period</span>` : ""}
-            </div>
-            ${(entry.importantEvents || entry.notes) ? `
-                <p class="wellness-note">${escapeHtml(entry.importantEvents || entry.notes)}</p>
-            ` : ""}
+            <section class="diary-page">
+                <div class="diary-page-head">
+                    <strong>${escapeHtml(entry.entryDate)}</strong>
+                    <span>${entry.weightKg ? `${entry.weightKg} kg` : "未记录体重"} · ${labelOf(entry.mood)}</span>
+                </div>
+                <div class="meta-line">
+                    ${entry.periodStart ? `<span class="pill warn">经期开始</span>` : ""}
+                    ${entry.periodDay && !entry.periodStart ? `<span class="pill warn">经期</span>` : ""}
+                </div>
+                <p class="diary-note">${escapeHtml(entry.importantEvents || entry.notes || "今天还没有写下特别事件。")}</p>
+                <div class="diary-turns">
+                    <button class="ghost-button" type="button" data-journal-turn="prev" ${state.journalPage === 0 ? "disabled" : ""}>上一页</button>
+                    <button class="ghost-button" type="button" data-journal-turn="next" ${state.journalPage === entries.length - 1 ? "disabled" : ""}>下一页</button>
+                </div>
+            </section>
         </article>
-    `).join("");
+    `;
 }
 
 function escapeHtml(value) {
@@ -2110,14 +2460,15 @@ document.querySelector("#useLocationWeatherButton").addEventListener("click", us
 els.batchImageFiles.addEventListener("change", () => openBatchImport(els.batchImageFiles.files));
 document.querySelector("#closeDialogButton").addEventListener("click", () => els.dialog.close());
 document.querySelector("#closeImportButton").addEventListener("click", () => els.importDialog.close());
+document.querySelector("#closeCareDialogButton").addEventListener("click", () => els.careDialog.close());
 document.querySelector("#cancelImportButton").addEventListener("click", () => els.importDialog.close());
 document.querySelector("#closeSettingsButton").addEventListener("click", () => els.settingsDialog.close());
 document.querySelector("#resetApiButton").addEventListener("click", resetApiBaseUrl);
 document.querySelector("#deleteButton").addEventListener("click", deleteSelected);
 document.querySelector("#deleteAllDataButton").addEventListener("click", deleteAllData);
 document.querySelector("#deleteWellnessDataButton").addEventListener("click", deleteWellnessData);
+document.querySelector("#nextBuyButton").addEventListener("click", renderNextBuyRecommendation);
 document.querySelector("#shoppingCheckButton").addEventListener("click", checkShoppingDuplicate);
-document.querySelector("#refreshShoppingAdviceButton").addEventListener("click", renderShoppingDecision);
 document.querySelector("#favoriteCurrentOutfitButton").addEventListener("click", favoriteCurrentOutfit);
 document.querySelector("#travelPlanButton").addEventListener("click", createTravelPlan);
 document.querySelector("#travelAddItemButton").addEventListener("click", addTravelPackingItem);
@@ -2127,6 +2478,9 @@ els.outfitResults.addEventListener("click", (event) => {
     if (button) {
         adoptOutfitPlan(button.closest(".outfit-card"));
     }
+});
+els.occasionCarousel.querySelectorAll(".occasion-card").forEach((card) => {
+    card.addEventListener("click", () => selectOccasionCard(card));
 });
 document.querySelector("#calendarTodayButton").addEventListener("click", saveCalendarToday);
 document.querySelector("#openPrivacySettingsButton").addEventListener("click", openSettings);
@@ -2141,6 +2495,12 @@ els.outfitForm.addEventListener("submit", recommendOutfits);
 els.wellnessForm.addEventListener("submit", saveWellnessEntry);
 els.wellnessDate.addEventListener("change", populateTodayWellness);
 document.querySelector("#refreshWellnessButton").addEventListener("click", loadWellnessEntries);
+els.wellnessList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-journal-turn]");
+    if (!button) return;
+    state.journalPage += button.dataset.journalTurn === "next" ? 1 : -1;
+    renderWellnessList();
+});
 [els.cycleLength, els.periodLength].forEach((el) => el.addEventListener("change", renderCycleAlert));
 [els.homeTemperature, els.homeSeason, els.homeOccasion].forEach((el) => el.addEventListener("change", renderHomeRecommendation));
 [els.avatarStyle, els.avatarShape, els.avatarSkin, els.avatarHairStyle, els.avatarScale].forEach((el) => el.addEventListener("change", updateAvatarPreview));

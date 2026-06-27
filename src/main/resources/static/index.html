@@ -8,14 +8,14 @@
     <meta name="apple-mobile-web-app-title" content="Smart Outfit">
     <title>Smart Outfit</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css?v=20260609d">
+    <link rel="stylesheet" href="styles.css?v=20260626-tools">
 </head>
 <body>
 <main class="app-shell">
     <header class="top-bar">
         <div>
             <p class="eyebrow">SMART OUTFIT</p>
-            <h1>My Wardrobe</h1>
+            <h1>Smart Outfit</h1>
         </div>
         <div class="weather-chip" id="weatherChip">
             <div>
@@ -29,20 +29,19 @@
     </header>
 
     <nav class="app-tabs" aria-label="Pages">
-        <button class="tab-button active" data-page="closet" type="button">Home</button>
-        <button class="tab-button" data-page="outfits" type="button">Outfit Planner</button>
-        <button class="tab-button" data-page="fitting" type="button">Fitting Mirror</button>
-        <button class="tab-button" data-page="tools" type="button">Tools</button>
-        <button class="tab-button" data-page="wellness" type="button">Wellness</button>
+        <button class="tab-button active" data-page="closet" type="button">衣柜</button>
+        <button class="tab-button" data-page="outfits" type="button">穿搭</button>
+        <button class="tab-button" data-page="fitting" type="button">试衣</button>
+        <button class="tab-button" data-page="tools" type="button">工具</button>
+        <button class="tab-button" data-page="wellness" type="button">健康</button>
     </nav>
 
     <section id="closetPage" class="page-panel active">
         <section class="home-grid">
             <article class="home-hero-card">
-                <div class="section-heading">
+                <div class="section-heading compact-heading">
                     <div>
-                        <h2>Today's Outfit</h2>
-                        <p class="dialog-subtitle">Recommended from weather, season, and your wardrobe</p>
+                        <h2>今日推荐</h2>
                     </div>
                     <button class="ghost-button" id="refreshHomeRecommendationButton" type="button">Refresh</button>
                 </div>
@@ -71,12 +70,11 @@
                     </label>
                 </div>
                 <div id="homeRecommendation" class="home-recommendation" aria-live="polite"></div>
-                <p class="quiet-note">Weather API is prepared; enter temperature manually for now, with location weather planned later.</p>
             </article>
 
             <aside class="home-side-card">
                 <div class="section-heading">
-                    <h2>Quick Actions</h2>
+                    <h2>快捷操作</h2>
                 </div>
                 <div class="quick-actions">
                     <button class="primary-button" id="homeNewItemButton" type="button">Add Item</button>
@@ -151,31 +149,54 @@
                     <div class="clothes-grid" id="clothesGrid" aria-live="polite"></div>
                 </div>
 
-                <aside class="detail-panel" id="detailPanel" aria-live="polite">
-                    <div class="empty-detail">
-                        <p>Select an item to view details</p>
-                    </div>
-                </aside>
+                <aside class="detail-panel" id="detailPanel" aria-live="polite" aria-hidden="true"></aside>
             </section>
         </section>
     </section>
 
     <section id="outfitsPage" class="page-panel">
-        <section class="recommendation-grid single-column">
-            <form id="outfitForm" class="wellness-card">
+        <section class="outfit-planner-panel">
+            <form id="outfitForm" class="wellness-card outfit-control-card">
                 <div class="section-heading">
-                    <h2>Generate Outfit</h2>
+                    <div>
+                        <h2>选择穿搭场合</h2>
+                        <p class="dialog-subtitle">左右滑动选择场景，系统会从你的衣柜里组合推荐</p>
+                    </div>
                 </div>
-                <div class="form-row">
-                    <label>
-                        Occasion
-                        <select id="outfitOccasion" required>
-                            <option value="work">Work</option>
-                            <option value="casual">Casual</option>
-                            <option value="party">Party</option>
-                            <option value="sport">Sport</option>
-                        </select>
-                    </label>
+                <select id="outfitOccasion" class="visually-hidden" aria-label="Selected occasion" required>
+                    <option value="work">Work</option>
+                    <option value="casual">Casual</option>
+                    <option value="party">Party</option>
+                    <option value="sport">Sport</option>
+                </select>
+                <div class="occasion-carousel" id="occasionCarousel" aria-label="Outfit occasions">
+                    <button class="occasion-card active" type="button" data-occasion="party" data-title="Party Night">
+                        <span class="occasion-art party-art" aria-hidden="true"></span>
+                        <strong>Party</strong>
+                        <small>聚会 / 晚宴</small>
+                    </button>
+                    <button class="occasion-card" type="button" data-occasion="work" data-title="Business Day">
+                        <span class="occasion-art business-art" aria-hidden="true"></span>
+                        <strong>Business</strong>
+                        <small>商务 / 通勤</small>
+                    </button>
+                    <button class="occasion-card" type="button" data-occasion="casual" data-title="Family Gathering">
+                        <span class="occasion-art family-art" aria-hidden="true"></span>
+                        <strong>Family</strong>
+                        <small>家庭聚会</small>
+                    </button>
+                    <button class="occasion-card" type="button" data-occasion="casual" data-title="Weekend Casual">
+                        <span class="occasion-art casual-art" aria-hidden="true"></span>
+                        <strong>Casual</strong>
+                        <small>周末 / 逛街</small>
+                    </button>
+                    <button class="occasion-card" type="button" data-occasion="sport" data-title="Sport Mode">
+                        <span class="occasion-art sport-art" aria-hidden="true"></span>
+                        <strong>Sport</strong>
+                        <small>运动 / 出行</small>
+                    </button>
+                </div>
+                <div class="form-row compact-controls">
                     <label>
                         Season
                         <select id="outfitSeason" required>
@@ -196,8 +217,7 @@
                         <input id="outfitColor" type="text" placeholder="black / white / red">
                     </label>
                 </div>
-                <button class="primary-button" type="submit">Recommend Outfits</button>
-                <p class="quiet-note">Plans are assembled from your existing wardrobe. AI full-body visuals can be connected later.</p>
+                <button class="primary-button" type="submit">按当前条件刷新推荐</button>
             </form>
         </section>
         <section class="outfit-results" id="outfitResults" aria-live="polite"></section>
@@ -208,13 +228,22 @@
             <article class="fitting-preview-card">
                 <div class="section-heading">
                     <div>
-                        <h2>My Fitting Mirror</h2>
-                        <p class="dialog-subtitle">Preview outfits with a private avatar, no real full-body photo required</p>
+                        <h2>AI 真实试穿</h2>
+                        <p class="dialog-subtitle">面试演示版：展示生成后的真实穿搭效果</p>
                     </div>
-                    <span class="pill warn">MVP</span>
+                    <span class="pill warn">Demo</span>
+                </div>
+                <div class="ai-tryon-demo" id="aiTryonDemo">
+                    <img id="aiTryonDemoImage" src="models/tryon-demos/party-red-dress-blazer.png" alt="AI virtual try-on demo result">
+                    <div class="ai-tryon-caption">
+                        <strong id="aiTryonDemoTitle">Generated Try-On Preview</strong>
+                        <span id="aiTryonDemoSubtitle">根据当前衣柜单品生成完整穿着效果</span>
+                    </div>
                 </div>
                 <div class="avatar-stage" id="avatarStage">
                     <div class="avatar-body" id="avatarBody">
+                        <img class="avatar-model" src="models/fitting-model-realistic.png" alt="Fitting mirror model">
+                        <img class="avatar-foreground" src="models/fitting-model-realistic.png" alt="">
                         <div class="avatar-hair" id="avatarHair"></div>
                         <div class="avatar-head" id="avatarHead">
                             <span class="avatar-eye left"></span>
@@ -237,7 +266,7 @@
                     </div>
                     <div class="fit-accessory fit-accessory-bag" id="fitLayerBag"></div>
                 </div>
-                <p class="quiet-note">This is an avatar-based outfit sketch for color, proportion, and styling direction. Real-photo try-on can be added later as an opt-in feature.</p>
+                <p class="quiet-note">当前用于实习面试展示产品效果；正式版本可接入虚拟试衣模型/API 生成用户自己的试穿图。</p>
             </article>
 
             <article class="fitting-control-card">
@@ -321,10 +350,10 @@
                 <div class="tool-output" id="fittingSummary"></div>
                 <div class="realistic-tryon-card">
                     <div>
-                        <strong>Realistic Image Try-On</strong>
-                        <p>Enable after connecting an AI virtual try-on model: users choose an avatar or authorize a real photo, then the system generates a more realistic try-on image.</p>
+                        <strong>AI 真实试穿 Demo</strong>
+                        <p>面试演示中先展示高保真生成结果；正式产品可接入 IDM-VTON、CatVTON 或第三方虚拟试衣 API。</p>
                     </div>
-                    <span class="pill warn">AI Later</span>
+                    <span class="pill warn">Ready</span>
                 </div>
             </article>
         </section>
@@ -332,7 +361,7 @@
 
     <section id="toolsPage" class="page-panel">
         <section class="tools-grid">
-            <article class="tool-card">
+            <article class="tool-card tool-calendar">
                 <div class="section-heading">
                     <h2>Outfit Calendar</h2>
                 </div>
@@ -341,28 +370,29 @@
                 <div class="tool-output" id="calendarOutput"></div>
             </article>
 
-            <article class="tool-card">
+            <article class="tool-card tool-idle">
                 <div class="section-heading">
-                    <h2>Care Reminders</h2>
-                </div>
-                <div class="tool-output" id="careReminderList"></div>
-            </article>
-
-            <article class="tool-card">
-                <div class="section-heading">
-                    <h2>Idle Wardrobe</h2>
+                    <h2>闲置提醒</h2>
                 </div>
                 <div class="tool-output" id="idleReminderList"></div>
             </article>
 
-            <article class="tool-card">
+            <article class="tool-card tool-color">
                 <div class="section-heading">
                     <h2>Color Analysis</h2>
                 </div>
                 <div class="color-analysis" id="colorAnalysis"></div>
             </article>
 
-            <article class="tool-card">
+            <article class="tool-card tool-next-buy">
+                <div class="section-heading">
+                    <h2>下一件推荐</h2>
+                    <button class="ghost-button" id="nextBuyButton" type="button">重新计算</button>
+                </div>
+                <div class="next-buy-panel" id="nextBuyPanel"></div>
+            </article>
+
+            <article class="tool-card tool-duplicate">
                 <div class="section-heading">
                     <h2>Duplicate Check</h2>
                 </div>
@@ -380,16 +410,7 @@
                 <div class="tool-output" id="shoppingCheckResult"></div>
             </article>
 
-            <article class="tool-card feature-wide">
-                <div class="section-heading">
-                    <h2>Shopping Decisions</h2>
-                    <button class="ghost-button" id="refreshShoppingAdviceButton" type="button">Refresh Advice</button>
-                </div>
-                <p class="tool-copy">Personal-first wardrobe guidance: what is missing, what to avoid, and where budget should go.</p>
-                <div class="shopping-decision-grid" id="shoppingDecisionOutput"></div>
-            </article>
-
-            <article class="tool-card">
+            <article class="tool-card tool-saved">
                 <div class="section-heading">
                     <h2>Saved Outfits</h2>
                 </div>
@@ -398,14 +419,7 @@
                 <div class="tool-output" id="favoriteOutfitList"></div>
             </article>
 
-            <article class="tool-card">
-                <div class="section-heading">
-                    <h2>Occasion Templates</h2>
-                </div>
-                <div class="template-grid" id="occasionTemplates"></div>
-            </article>
-
-            <article class="tool-card">
+            <article class="tool-card tool-travel">
                 <div class="section-heading">
                     <h2>Travel Packing</h2>
                 </div>
@@ -452,7 +466,7 @@
                 <div class="tool-output" id="travelPlanOutput"></div>
             </article>
 
-            <article class="tool-card">
+            <article class="tool-card tool-privacy">
                 <div class="section-heading">
                     <h2>Privacy Data</h2>
                 </div>
@@ -460,7 +474,7 @@
                 <button class="danger-button" id="openPrivacySettingsButton" type="button">Open Privacy Settings</button>
             </article>
 
-            <article class="tool-card feature-wide">
+            <article class="tool-card tool-auth">
                 <div class="section-heading">
                     <h2>Authorization Center</h2>
                     <span class="pill warn">Off by Default</span>
@@ -565,7 +579,7 @@
 
         <section class="wellness-card">
             <div class="section-heading">
-                <h2>Recent Records</h2>
+                <h2>查看我的日记本</h2>
             </div>
             <div class="wellness-list" id="wellnessList"></div>
         </section>
@@ -734,7 +748,17 @@
     </form>
 </dialog>
 
+<dialog id="careDialog">
+    <div class="item-form">
+        <div class="dialog-heading">
+            <h2 id="careDialogTitle">衣物护理</h2>
+            <button class="icon-button" id="closeCareDialogButton" type="button" title="Close" aria-label="Close">×</button>
+        </div>
+        <div class="care-dialog-body" id="careDialogBody"></div>
+    </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20260609d" defer></script>
+<script src="app.js?v=20260626-tools" defer></script>
 </body>
 </html>
